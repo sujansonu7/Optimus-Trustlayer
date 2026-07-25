@@ -1,0 +1,14 @@
+From: Diane Kessler <diane.kessler@meridiananalytics.io>
+To: Sara Lindqvist <sara.lindqvist@meridiananalytics.io>
+Cc: Jordan Ellis <jordan.ellis@meridiananalytics.io>, RevOps <revops@meridiananalytics.io>
+Subject: Thornbury & Cole — account handoff
+Date: Tue, 21 Oct 2025 16:30:00 -0500
+
+Sara,
+
+With Jordan wrapping up at the end of the week, Thornbury & Cole is yours effective now. It's a solid Enterprise account (~$195K), renewal in November. Jordan will send you the context doc and intros before Friday.
+
+RevOps — please reflect the owner change in the tracker.
+
+Thanks,
+Diane

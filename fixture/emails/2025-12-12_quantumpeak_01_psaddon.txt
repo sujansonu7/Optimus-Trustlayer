@@ -1,0 +1,14 @@
+From: Diego Marin <diego.marin@meridiananalytics.io>
+To: Lauren Whitfield <lauren.whitfield@quantumpeakins.com>
+Cc: RevOps <revops@meridiananalytics.io>
+Subject: Implementation package — statement of work
+Date: Fri, 12 Dec 2025 10:20:00 -0500
+
+Hi Lauren,
+
+Confirming the professional-services implementation package we scoped: $45,000, one-time. This covers the custom underwriting dashboards and the data migration, and it's separate from your annual Pulse subscription — it won't recur next year.
+
+I'll have RevOps book it as a separate line item so your renewal number stays clean.
+
+Best,
+Diego

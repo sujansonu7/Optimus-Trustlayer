@@ -1,0 +1,15 @@
+Gong Call Recording — Auto-Transcribed
+Account: Quantum Peak (Quantum Peak Insurance)
+Date: January 28, 2026, 11:00 AM EST
+Duration: 20 min
+Participants: Diego Marin (Meridian Analytics, AE), Lauren Whitfield (SVP Underwriting Analytics, Quantum Peak)
+
+Diego Marin: Lauren, wanted to close the loop on the implementation package. The $45K covers the custom underwriting dashboards and the migration work.
+
+Lauren Whitfield: And that's a one-time cost, correct? I don't want it baked into what we pay every year.
+
+Diego Marin: Correct — it's a one-time professional-services engagement. Your recurring subscription stays at the $365K level. The services piece is separate.
+
+Lauren Whitfield: Good. Finance is very particular about what counts as recurring versus one-off.
+
+Diego Marin: Understood, and that's exactly how we're booking it — separate line item, non-recurring.

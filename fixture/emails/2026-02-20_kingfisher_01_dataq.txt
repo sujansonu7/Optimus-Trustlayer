@@ -1,0 +1,13 @@
+From: Victor Osei <victor.osei@kingfisherpay.com>
+To: Diego Marin <diego.marin@meridiananalytics.io>
+Subject: Question on transaction cohort view
+Date: Fri, 20 Feb 2026 09:10:00 -0500
+
+Diego,
+
+Is there a way to break the cohort view down by settlement region? If not natively, happy to hear a workaround.
+
+Victor
+
+Victor Osei
+VP Data | Kingfisher Payments

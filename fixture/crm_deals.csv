@@ -1,0 +1,43 @@
+deal_id,account_id,account_name,deal_name,deal_owner,amount_usd,deal_stage,deal_type,product,create_date,close_date
+DEAL-5001,ACC-1001,"Silverline Logistics Group, Inc.","Silverline Logistics Group, Inc. — New Business",Marcus Ohene,210000,Closed Won,New Business,Meridian Pulse — Enterprise,2023-05-12,2023-05-12
+DEAL-5002,ACC-1002,Beacon Health Partners,Beacon Health Partners — New Business,Sara Lindqvist,88000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-02-14,2024-02-14
+DEAL-5003,ACC-1003,Beacon Healthcare Systems,Beacon Healthcare Systems — New Business,Diego Marin,175000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-01-20,2025-01-20
+DEAL-5004,ACC-1004,Nova Materials Inc.,Nova Materials Inc. — New Business,Marcus Ohene,95000,Closed Won,New Business,Meridian Pulse — Enterprise,2022-08-03,2022-08-03
+DEAL-5005,ACC-1005,Nova Material Sciences LLC,Nova Material Sciences LLC — New Business,Diego Marin,340000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-11-05,2025-11-05
+DEAL-5006,ACC-1006,Crestview Financial Group,Crestview Financial Group — New Business,Sara Lindqvist,120000,Closed Won,New Business,Meridian Pulse — Enterprise,2021-03-19,2021-03-19
+DEAL-5007,ACC-1007,Crestview Capital Advisors,Crestview Capital Advisors — New Business,Sara Lindqvist,150000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-04-16,2024-04-16
+DEAL-5008,ACC-1008,Atlas Freight Solutions,Atlas Freight Solutions — New Business,Marcus Ohene,78000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-03-10,2025-03-10
+DEAL-5009,ACC-1009,Atlas Freight Logistics,Atlas Freight Logistics — New Business,Marcus Ohene,82000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-03-28,2025-03-28
+DEAL-5010,ACC-1010,Brightpath Consulting,Brightpath Consulting — New Business,Sara Lindqvist,64000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-10-01,2024-10-01
+DEAL-5011,ACC-1011,Brightpath Digital,Brightpath Digital — New Business,Diego Marin,71000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-02-11,2025-02-11
+DEAL-5012,ACC-1012,Cobalt Ridge Manufacturing,Cobalt Ridge Manufacturing — New Business,Sara Lindqvist,184000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-06-25,2024-06-25
+DEAL-5013,ACC-1013,Prairie Point Retail Co.,Prairie Point Retail Co. — New Business,Marcus Ohene,96000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-05-20,2025-05-20
+DEAL-5014,ACC-1014,Quantum Peak Insurance,Quantum Peak Insurance — New Business,Diego Marin,365000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-09-30,2024-09-30
+DEAL-5015,ACC-1015,Thornbury & Cole Insurance Group,Thornbury & Cole Insurance Group — New Business,Jordan Ellis,195000,Closed Won,New Business,Meridian Pulse — Enterprise,2022-11-08,2022-11-08
+DEAL-5016,ACC-1016,Grantline Media Group,Grantline Media Group — New Business,Diego Marin,110000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-01-31,2024-01-31
+DEAL-5017,ACC-2001,Redwood Cloud Systems,Redwood Cloud Systems — New Business,Sara Lindqvist,220000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-07-09,2024-07-09
+DEAL-5018,ACC-2002,Harbor Point Financial,Harbor Point Financial — New Business,Diego Marin,88000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-11-12,2024-11-12
+DEAL-5019,ACC-2003,Summit Trail Outfitters,Summit Trail Outfitters — New Business,Marcus Ohene,54000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-01-15,2025-01-15
+DEAL-5020,ACC-2004,Blue Delta Foods,Blue Delta Foods — New Business,Sara Lindqvist,67000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-08-21,2024-08-21
+DEAL-5021,ACC-2005,Ironwood Construction Co.,Ironwood Construction Co. — New Business,Diego Marin,160000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-05-02,2024-05-02
+DEAL-5022,ACC-2006,Meadowlark Health,Meadowlark Health — New Business,Marcus Ohene,92000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-12-01,2024-12-01
+DEAL-5023,ACC-2007,Cedar Vale Software LLC,Cedar Vale Software LLC — New Business,Sara Lindqvist,73000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-02-03,2025-02-03
+DEAL-5024,ACC-2008,Pinnacle Robotics,Pinnacle Robotics — New Business,Diego Marin,145000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-06-18,2024-06-18
+DEAL-5025,ACC-2009,Lakeside Hospitality Group,Lakeside Hospitality Group — New Business,Marcus Ohene,59000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-04-07,2025-04-07
+DEAL-5026,ACC-2010,Granite Peak Energy,Granite Peak Energy — New Business,Sara Lindqvist,205000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-03-25,2024-03-25
+DEAL-5027,ACC-2011,Willowbrook Pharma,Willowbrook Pharma — New Business,Diego Marin,188000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-10-14,2024-10-14
+DEAL-5028,ACC-2012,Copper Canyon Retail,Copper Canyon Retail — New Business,Marcus Ohene,61000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-05-06,2025-05-06
+DEAL-5029,ACC-2013,Stonebridge Advisory,Stonebridge Advisory — New Business,Sara Lindqvist,70000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-09-11,2024-09-11
+DEAL-5030,ACC-2014,Northwind Freight,Northwind Freight — New Business,Diego Marin,84000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-06-19,2025-06-19
+DEAL-5031,ACC-2015,Verdant Agriculture,Verdant Agriculture — New Business,Marcus Ohene,76000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-11-28,2024-11-28
+DEAL-5032,ACC-2016,Sable Point Media,Sable Point Media — New Business,Sara Lindqvist,58000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-03-02,2025-03-02
+DEAL-5033,ACC-2017,Terra Nova Analytics,Terra Nova Analytics — New Business,Diego Marin,132000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-04-30,2024-04-30
+DEAL-5034,ACC-2018,"Kingfisher Payments, Inc.","Kingfisher Payments, Inc. — New Business",Marcus Ohene,167000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-08-05,2024-08-05
+DEAL-5035,ACC-2019,Alderwood Insurance,Alderwood Insurance — New Business,Sara Lindqvist,90000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-07-22,2025-07-22
+DEAL-5036,ACC-2020,Bright Harbor Logistics,Bright Harbor Logistics — New Business,Diego Marin,79000,Closed Won,New Business,Meridian Pulse — Enterprise,2024-12-16,2024-12-16
+DEAL-5037,ACC-1001,"Silverline Logistics Group, Inc.","Silverline Logistics Group, Inc. — Renewal FY26",Marcus Ohene,210000,Renewal — Negotiation,Renewal,Meridian Pulse — Enterprise,2025-12-01,2026-08-15
+DEAL-5038,ACC-1012,Cobalt Ridge Manufacturing,Cobalt Ridge Manufacturing — Renewal FY26,Sara Lindqvist,184000,Renewal — Contract Sent,Renewal,Meridian Pulse — Enterprise,2025-12-01,2026-09-30
+DEAL-5039,ACC-1013,Prairie Point Retail Co.,Prairie Point Retail Co. — Renewal FY26,Marcus Ohene,96000,Renewal — Negotiation,Renewal,Meridian Pulse — Enterprise,2025-12-01,2026-05-31
+DEAL-5040,ACC-1014,Quantum Peak Insurance,Quantum Peak Insurance — Renewal FY26,Diego Marin,365000,Renewal — Negotiation,Renewal,Meridian Pulse — Enterprise,2025-12-01,2026-09-30
+DEAL-5041,ACC-1016,Grantline Media Group,Grantline Media Group — Renewal FY26,Diego Marin,110000,Renewal — Contract Sent,Renewal,Meridian Pulse — Enterprise,2025-12-01,2026-04-30
+DEAL-5042,ACC-1005,Nova Material Sciences LLC,Nova Material Sciences LLC — New Business,Diego Marin,340000,Closed Won,New Business,Meridian Pulse — Enterprise,2025-10-02,2025-12-15

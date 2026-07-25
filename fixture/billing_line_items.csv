@@ -1,0 +1,44 @@
+invoice_id,account_id,account_name,sku,line_item_description,billing_period,amount_usd,recurring
+INV-90001,ACC-1001,"Silverline Logistics Group, Inc.",SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,52500,yes
+INV-90002,ACC-1001,"Silverline Logistics Group, Inc.",SKU-20087-ADD,Meridian Insights Add-on,2026-Q1,6250,yes
+INV-90003,ACC-1002,Beacon Health Partners,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,22000,yes
+INV-90004,ACC-1003,Beacon Healthcare Systems,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,43750,yes
+INV-90005,ACC-1004,Nova Materials Inc.,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,23750,yes
+INV-90006,ACC-1005,Nova Material Sciences LLC,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,85000,yes
+INV-90007,ACC-1005,Nova Material Sciences LLC,SKU-20087-ADD,Meridian Insights Add-on,2026-Q1,6250,yes
+INV-90008,ACC-1007,Crestview Capital Advisors,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,37500,yes
+INV-90009,ACC-1008,Atlas Freight Solutions,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,19500,yes
+INV-90010,ACC-1009,Atlas Freight Logistics,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,20500,yes
+INV-90011,ACC-1010,Brightpath Consulting,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,16000,yes
+INV-90012,ACC-1011,Brightpath Digital,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,17750,yes
+INV-90013,ACC-1012,Cobalt Ridge Manufacturing,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,46000,yes
+INV-90014,ACC-1012,Cobalt Ridge Manufacturing,SKU-20087-ADD,Meridian Insights Add-on,2026-Q1,6250,yes
+INV-90015,ACC-1013,Prairie Point Retail Co.,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,24000,yes
+INV-90016,ACC-1014,Quantum Peak Insurance,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,91250,yes
+INV-90017,ACC-1014,Quantum Peak Insurance,SKU-20087-ADD,Meridian Insights Add-on,2026-Q1,6250,yes
+INV-90018,ACC-1015,Thornbury & Cole Insurance Group,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,48750,yes
+INV-90019,ACC-1016,Grantline Media Group,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,27500,yes
+INV-90020,ACC-2001,Redwood Cloud Systems,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,55000,yes
+INV-90021,ACC-2001,Redwood Cloud Systems,SKU-20087-ADD,Meridian Insights Add-on,2026-Q1,6250,yes
+INV-90022,ACC-2002,Harbor Point Financial,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,22000,yes
+INV-90023,ACC-2003,Summit Trail Outfitters,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,13500,yes
+INV-90024,ACC-2004,Blue Delta Foods,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,16750,yes
+INV-90025,ACC-2005,Ironwood Construction Co.,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,40000,yes
+INV-90026,ACC-2006,Meadowlark Health,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,23000,yes
+INV-90027,ACC-2007,Cedar Vale Software LLC,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,18250,yes
+INV-90028,ACC-2008,Pinnacle Robotics,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,36250,yes
+INV-90029,ACC-2009,Lakeside Hospitality Group,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,14750,yes
+INV-90030,ACC-2010,Granite Peak Energy,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,51250,yes
+INV-90031,ACC-2010,Granite Peak Energy,SKU-20087-ADD,Meridian Insights Add-on,2026-Q1,6250,yes
+INV-90032,ACC-2011,Willowbrook Pharma,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,47000,yes
+INV-90033,ACC-2011,Willowbrook Pharma,SKU-20087-ADD,Meridian Insights Add-on,2026-Q1,6250,yes
+INV-90034,ACC-2012,Copper Canyon Retail,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,15250,yes
+INV-90035,ACC-2013,Stonebridge Advisory,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,17500,yes
+INV-90036,ACC-2014,Northwind Freight,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,21000,yes
+INV-90037,ACC-2015,Verdant Agriculture,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,19000,yes
+INV-90038,ACC-2016,Sable Point Media,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,14500,yes
+INV-90039,ACC-2017,Terra Nova Analytics,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,33000,yes
+INV-90040,ACC-2018,"Kingfisher Payments, Inc.",SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,41750,yes
+INV-90041,ACC-2019,Alderwood Insurance,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,22500,yes
+INV-90042,ACC-2020,Bright Harbor Logistics,SKU-10045-ENT,Pulse Enterprise v3,2026-Q1,19750,yes
+INV-90043,ACC-1014,Quantum Peak Insurance,SKU-40012-PS,Professional Services — Implementation Package,2025-Q4,45000,no

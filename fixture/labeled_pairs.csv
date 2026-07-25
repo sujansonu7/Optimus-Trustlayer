@@ -1,0 +1,202 @@
+record_a,record_b,same_entity,difficulty,note
+"Silverline Logistics Group, Inc. [CRM]",SLG-West [Renewals Tracker],yes,hard,"Silverline identity cluster (one entity, four names)"
+"Silverline Logistics Group, Inc. [CRM]",silverlinelogistics.io [Email domain],yes,hard,"Silverline identity cluster (one entity, four names)"
+"Silverline Logistics Group, Inc. [CRM]",Silverline Logistics [Email signature],yes,medium,"Silverline identity cluster (one entity, four names)"
+"Silverline Logistics Group, Inc. [CRM]",Silverline [Gong transcript],yes,medium,"Silverline identity cluster (one entity, four names)"
+"Silverline Logistics Group, Inc. [CRM]",SLG [Gong transcript],yes,hard,"Silverline identity cluster (one entity, four names)"
+SLG-West [Renewals Tracker],silverlinelogistics.io [Email domain],yes,hard,"Silverline identity cluster (one entity, four names)"
+SLG-West [Renewals Tracker],Silverline Logistics [Email signature],yes,hard,"Silverline identity cluster (one entity, four names)"
+SLG-West [Renewals Tracker],Silverline [Gong transcript],yes,hard,"Silverline identity cluster (one entity, four names)"
+SLG-West [Renewals Tracker],SLG [Gong transcript],yes,hard,"Silverline identity cluster (one entity, four names)"
+silverlinelogistics.io [Email domain],Silverline Logistics [Email signature],yes,hard,"Silverline identity cluster (one entity, four names)"
+silverlinelogistics.io [Email domain],Silverline [Gong transcript],yes,hard,"Silverline identity cluster (one entity, four names)"
+silverlinelogistics.io [Email domain],SLG [Gong transcript],yes,hard,"Silverline identity cluster (one entity, four names)"
+Silverline Logistics [Email signature],Silverline [Gong transcript],yes,medium,"Silverline identity cluster (one entity, four names)"
+Silverline Logistics [Email signature],SLG [Gong transcript],yes,hard,"Silverline identity cluster (one entity, four names)"
+Silverline [Gong transcript],SLG [Gong transcript],yes,hard,"Silverline identity cluster (one entity, four names)"
+Meridian Pulse [Marketing/Sales],Project Fathom [Notion/Slack/Jira],yes,hard,Core platform naming drift (all the same product)
+Meridian Pulse [Marketing/Sales],SKU-10045-ENT [Billing],yes,hard,Core platform naming drift (all the same product)
+Meridian Pulse [Marketing/Sales],Pulse Enterprise v3 [Billing line item],yes,medium,Core platform naming drift (all the same product)
+Meridian Pulse [Marketing/Sales],Pulse Enterprise [Zendesk tag],yes,medium,Core platform naming drift (all the same product)
+Meridian Pulse [Marketing/Sales],Enterprise [Zendesk tag],yes,hard,Core platform naming drift (all the same product)
+Project Fathom [Notion/Slack/Jira],SKU-10045-ENT [Billing],yes,hard,Core platform naming drift (all the same product)
+Project Fathom [Notion/Slack/Jira],Pulse Enterprise v3 [Billing line item],yes,hard,Core platform naming drift (all the same product)
+Project Fathom [Notion/Slack/Jira],Pulse Enterprise [Zendesk tag],yes,hard,Core platform naming drift (all the same product)
+Project Fathom [Notion/Slack/Jira],Enterprise [Zendesk tag],yes,hard,Core platform naming drift (all the same product)
+SKU-10045-ENT [Billing],Pulse Enterprise v3 [Billing line item],yes,hard,Core platform naming drift (all the same product)
+SKU-10045-ENT [Billing],Pulse Enterprise [Zendesk tag],yes,hard,Core platform naming drift (all the same product)
+SKU-10045-ENT [Billing],Enterprise [Zendesk tag],yes,hard,Core platform naming drift (all the same product)
+Pulse Enterprise v3 [Billing line item],Pulse Enterprise [Zendesk tag],yes,medium,Core platform naming drift (all the same product)
+Pulse Enterprise v3 [Billing line item],Enterprise [Zendesk tag],yes,hard,Core platform naming drift (all the same product)
+Pulse Enterprise [Zendesk tag],Enterprise [Zendesk tag],yes,hard,Core platform naming drift (all the same product)
+Meridian Insights Add-on [Marketing],Project Lighthouse [Engineering],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+Meridian Insights Add-on [Marketing],SKU-20087-ADD [Billing],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+Meridian Insights Add-on [Marketing],Insights Module (beta) [Slack/eng docs],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+Meridian Insights Add-on [Marketing],Insights Module [Zendesk],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+Project Lighthouse [Engineering],SKU-20087-ADD [Billing],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+Project Lighthouse [Engineering],Insights Module (beta) [Slack/eng docs],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+Project Lighthouse [Engineering],Insights Module [Zendesk],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+SKU-20087-ADD [Billing],Insights Module (beta) [Slack/eng docs],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+SKU-20087-ADD [Billing],Insights Module [Zendesk],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+Insights Module (beta) [Slack/eng docs],Insights Module [Zendesk],yes,hard,Insights add-on naming drift (same module; 'beta' label is stale)
+Elizabeth Munro <elizabeth.munro@beaconhealthpartners.com> [CRM],Liz Munro <elizabeth.munro@beaconhealthpartners.com> [Zendesk],yes,medium,"Same person, same email — contrast case vs the company-level near-misses"
+"Elizabeth Munro, Director of Analytics [CRM]",Liz Munro [Support ticket],yes,medium,Same person
+Ironwood Construction Co. [CRM],Ironwood Construction Co [Renewals Tracker],yes,easy,Trivial punctuation difference — NOT a real conflict
+Cedar Vale Software LLC [CRM],"Cedar Vale Software, LLC [Renewals Tracker]",yes,easy,Trivial comma difference — NOT a real conflict
+"Kingfisher Payments, Inc. [CRM]",Kingfisher Payments Inc [Renewals Tracker],yes,easy,Trivial punctuation difference — NOT a real conflict
+"Silverline Logistics Group, Inc. [CRM]",silverlinelogistics.io [Email domain],yes,easy,Account name vs its verified domain
+Beacon Health Partners [CRM],beaconhealthpartners.com [Email domain],yes,easy,Account name vs its verified domain
+Beacon Healthcare Systems [CRM],beaconhealthcaresystems.com [Email domain],yes,easy,Account name vs its verified domain
+Nova Materials Inc. [CRM],novamaterials.com [Email domain],yes,easy,Account name vs its verified domain
+Nova Material Sciences LLC [CRM],novamaterialsciences.com [Email domain],yes,easy,Account name vs its verified domain
+Crestview Financial Group [CRM],crestviewfinancial.com [Email domain],yes,easy,Account name vs its verified domain
+Crestview Capital Advisors [CRM],crestviewcapital.com [Email domain],yes,easy,Account name vs its verified domain
+Atlas Freight Solutions [CRM],atlasfreightsolutions.com [Email domain],yes,easy,Account name vs its verified domain
+Atlas Freight Logistics [CRM],atlasfreightlogistics.com [Email domain],yes,easy,Account name vs its verified domain
+Brightpath Consulting [CRM],brightpathconsulting.com [Email domain],yes,easy,Account name vs its verified domain
+Brightpath Digital [CRM],brightpath.digital [Email domain],yes,easy,Account name vs its verified domain
+Cobalt Ridge Manufacturing [CRM],cobaltridge.com [Email domain],yes,easy,Account name vs its verified domain
+Prairie Point Retail Co. [CRM],prairiepointretail.com [Email domain],yes,easy,Account name vs its verified domain
+Quantum Peak Insurance [CRM],quantumpeakins.com [Email domain],yes,easy,Account name vs its verified domain
+Thornbury & Cole Insurance Group [CRM],thornburycole.com [Email domain],yes,easy,Account name vs its verified domain
+Grantline Media Group [CRM],grantlinemedia.com [Email domain],yes,easy,Account name vs its verified domain
+Redwood Cloud Systems [CRM],redwoodcloud.com [Email domain],yes,easy,Account name vs its verified domain
+Harbor Point Financial [CRM],harborpointfin.com [Email domain],yes,easy,Account name vs its verified domain
+Summit Trail Outfitters [CRM],summittrail.com [Email domain],yes,easy,Account name vs its verified domain
+Blue Delta Foods [CRM],bluedeltafoods.com [Email domain],yes,easy,Account name vs its verified domain
+Ironwood Construction Co. [CRM],ironwoodconstruction.com [Email domain],yes,easy,Account name vs its verified domain
+Meadowlark Health [CRM],meadowlarkhealth.com [Email domain],yes,easy,Account name vs its verified domain
+Cedar Vale Software LLC [CRM],cedarvale.io [Email domain],yes,easy,Account name vs its verified domain
+Pinnacle Robotics [CRM],pinnaclerobotics.com [Email domain],yes,easy,Account name vs its verified domain
+Lakeside Hospitality Group [CRM],lakesidehospitality.com [Email domain],yes,easy,Account name vs its verified domain
+Granite Peak Energy [CRM],granitepeakenergy.com [Email domain],yes,easy,Account name vs its verified domain
+Willowbrook Pharma [CRM],willowbrookpharma.com [Email domain],yes,easy,Account name vs its verified domain
+Copper Canyon Retail [CRM],coppercanyonretail.com [Email domain],yes,easy,Account name vs its verified domain
+Stonebridge Advisory [CRM],stonebridgeadvisory.com [Email domain],yes,easy,Account name vs its verified domain
+Northwind Freight [CRM],northwindfreight.com [Email domain],yes,easy,Account name vs its verified domain
+Verdant Agriculture [CRM],verdantag.com [Email domain],yes,easy,Account name vs its verified domain
+Sable Point Media [CRM],sablepointmedia.com [Email domain],yes,easy,Account name vs its verified domain
+Terra Nova Analytics [CRM],terranovaanalytics.com [Email domain],yes,easy,Account name vs its verified domain
+"Kingfisher Payments, Inc. [CRM]",kingfisherpay.com [Email domain],yes,easy,Account name vs its verified domain
+Alderwood Insurance [CRM],alderwoodins.com [Email domain],yes,easy,Account name vs its verified domain
+Bright Harbor Logistics [CRM],brightharborlogistics.com [Email domain],yes,easy,Account name vs its verified domain
+Cobalt Ridge Manufacturing [CRM],Cobalt Ridge [Gong transcript],yes,easy,"Same account, informal"
+Prairie Point Retail Co. [CRM],Prairie Point [Gong transcript],yes,easy,"Same account, informal"
+Quantum Peak Insurance [CRM],Quantum Peak [Gong transcript],yes,easy,"Same account, informal"
+Grantline Media Group [CRM],Grantline [Email],yes,easy,"Same account, informal"
+Nova Material Sciences LLC [CRM],Nova Material Sciences [Gong transcript],yes,easy,"Same account, informal"
+"Beacon Health Partners (Columbus, OH) [CRM]","Beacon Healthcare Systems (Tampa, FL) [CRM]",no,hard,"NEAR-MISS: Different HQ, different owner, unrelated ownership"
+"Nova Materials Inc. (Pittsburgh, PA) [CRM]","Nova Material Sciences LLC (Austin, TX) [CRM]",no,hard,NEAR-MISS: $95K legacy vs $340K new logo — easy to conflate in pipeline
+"Crestview Financial Group (Chicago, IL) [CRM]","Crestview Capital Advisors (Denver, CO) [CRM]",no,hard,"NEAR-MISS: One churned 2024, one active $150K — merging would resurrect a dead account"
+"Atlas Freight Solutions (Memphis, TN) [CRM]","Atlas Freight Logistics (Charlotte, NC) [CRM]",no,hard,"NEAR-MISS: Same vertical, onboarded 3 weeks apart — hardest pair"
+"Brightpath Consulting (Seattle, WA) [CRM]","Brightpath Digital (Seattle, WA) [CRM]",no,hard,"NEAR-MISS: Same city, different domains + tax IDs — proximity is not a merge signal"
+"Beacon Health [Gong transcript, Sara's call]","Beacon Healthcare [Gong transcript, Diego's call]",no,hard,Near-miss shorthand — different companies
+beaconhealthpartners.com,beaconhealthcaresystems.com,no,medium,Different domains — different companies
+Nova Materials [pipeline report],Nova Material Sciences [pipeline report],no,hard,Near-miss — different companies
+novamaterials.com,novamaterialsciences.com,no,medium,Different domains
+Crestview Financial [email],Crestview Capital [email],no,hard,"Near-miss — one churned, one active"
+crestviewfinancial.com,crestviewcapital.com,no,medium,Different domains
+Atlas Freight (Memphis) [transcript],Atlas Freight (Charlotte) [transcript],no,hard,Near-miss — different logistics cos
+atlasfreightsolutions.com,atlasfreightlogistics.com,no,medium,Different domains
+Brightpath (brightpathconsulting.com),Brightpath (brightpath.digital),no,hard,"Same city, different firms, different tax IDs"
+"Brightpath Consulting, Tax ID 47-3921004","Brightpath Digital, Tax ID 88-2140577",no,medium,Different tax IDs — decisive signal
+Meridian Pulse [platform],Meridian Insights Add-on [module],no,medium,Platform vs add-on module — different products
+Project Fathom [core platform codename],Project Lighthouse [add-on codename],no,medium,Different internal projects
+SKU-10045-ENT,SKU-20087-ADD,no,easy,Different SKUs — different products
+Pulse Enterprise [Zendesk],Insights Module (beta) [Zendesk],no,medium,Different products
+"Silverline Logistics Group, Inc. (Dallas, TX)","Northwind Freight (Kansas City, MO)",no,easy,Different logistics companies
+SLG-West [Renewals],Bright Harbor Logistics [CRM],no,medium,Shorthand distractor — different companies
+Silverline Logistics [signature],Atlas Freight Logistics [CRM],no,medium,Different logistics companies
+"Silverline Logistics Group, Inc. [CRM]",Nova Materials Inc. [CRM],no,medium,Unrelated companies
+Beacon Health Partners [CRM],Nova Material Sciences LLC [CRM],no,easy,Unrelated companies
+Beacon Healthcare Systems [CRM],Crestview Financial Group [CRM],no,easy,Unrelated companies
+Nova Materials Inc. [CRM],Crestview Capital Advisors [CRM],no,easy,Unrelated companies
+Nova Material Sciences LLC [CRM],Atlas Freight Solutions [CRM],no,medium,Unrelated companies
+Crestview Financial Group [CRM],Atlas Freight Logistics [CRM],no,easy,Unrelated companies
+Crestview Capital Advisors [CRM],Brightpath Consulting [CRM],no,easy,Unrelated companies
+Atlas Freight Solutions [CRM],Brightpath Digital [CRM],no,easy,Unrelated companies
+Atlas Freight Logistics [CRM],Cobalt Ridge Manufacturing [CRM],no,medium,Unrelated companies
+Brightpath Consulting [CRM],Prairie Point Retail Co. [CRM],no,easy,Unrelated companies
+Brightpath Digital [CRM],Quantum Peak Insurance [CRM],no,easy,Unrelated companies
+Cobalt Ridge Manufacturing [CRM],Thornbury & Cole Insurance Group [CRM],no,easy,Unrelated companies
+Prairie Point Retail Co. [CRM],Grantline Media Group [CRM],no,medium,Unrelated companies
+Quantum Peak Insurance [CRM],Redwood Cloud Systems [CRM],no,easy,Unrelated companies
+Thornbury & Cole Insurance Group [CRM],Harbor Point Financial [CRM],no,easy,Unrelated companies
+Grantline Media Group [CRM],Summit Trail Outfitters [CRM],no,easy,Unrelated companies
+Redwood Cloud Systems [CRM],Blue Delta Foods [CRM],no,medium,Unrelated companies
+Harbor Point Financial [CRM],Ironwood Construction Co. [CRM],no,easy,Unrelated companies
+Summit Trail Outfitters [CRM],Meadowlark Health [CRM],no,easy,Unrelated companies
+Blue Delta Foods [CRM],Cedar Vale Software LLC [CRM],no,easy,Unrelated companies
+Ironwood Construction Co. [CRM],Pinnacle Robotics [CRM],no,medium,Unrelated companies
+Meadowlark Health [CRM],Lakeside Hospitality Group [CRM],no,easy,Unrelated companies
+Cedar Vale Software LLC [CRM],Granite Peak Energy [CRM],no,easy,Unrelated companies
+Pinnacle Robotics [CRM],Willowbrook Pharma [CRM],no,easy,Unrelated companies
+Lakeside Hospitality Group [CRM],Copper Canyon Retail [CRM],no,medium,Unrelated companies
+Granite Peak Energy [CRM],Stonebridge Advisory [CRM],no,easy,Unrelated companies
+Willowbrook Pharma [CRM],Northwind Freight [CRM],no,easy,Unrelated companies
+Copper Canyon Retail [CRM],Verdant Agriculture [CRM],no,easy,Unrelated companies
+Stonebridge Advisory [CRM],Sable Point Media [CRM],no,medium,Unrelated companies
+Northwind Freight [CRM],Terra Nova Analytics [CRM],no,easy,Unrelated companies
+Verdant Agriculture [CRM],"Kingfisher Payments, Inc. [CRM]",no,easy,Unrelated companies
+Sable Point Media [CRM],Alderwood Insurance [CRM],no,easy,Unrelated companies
+Terra Nova Analytics [CRM],Bright Harbor Logistics [CRM],no,medium,Unrelated companies
+"Silverline Logistics Group, Inc. [CRM]",Crestview Financial Group [CRM],no,easy,Unrelated companies
+Beacon Health Partners [CRM],Crestview Capital Advisors [CRM],no,easy,Unrelated companies
+Beacon Healthcare Systems [CRM],Atlas Freight Solutions [CRM],no,easy,Unrelated companies
+Nova Materials Inc. [CRM],Atlas Freight Logistics [CRM],no,medium,Unrelated companies
+Nova Material Sciences LLC [CRM],Brightpath Consulting [CRM],no,easy,Unrelated companies
+Crestview Financial Group [CRM],Brightpath Digital [CRM],no,easy,Unrelated companies
+Crestview Capital Advisors [CRM],Cobalt Ridge Manufacturing [CRM],no,easy,Unrelated companies
+Atlas Freight Solutions [CRM],Prairie Point Retail Co. [CRM],no,medium,Unrelated companies
+Atlas Freight Logistics [CRM],Quantum Peak Insurance [CRM],no,easy,Unrelated companies
+Brightpath Consulting [CRM],Thornbury & Cole Insurance Group [CRM],no,easy,Unrelated companies
+Brightpath Digital [CRM],Grantline Media Group [CRM],no,easy,Unrelated companies
+Cobalt Ridge Manufacturing [CRM],Redwood Cloud Systems [CRM],no,medium,Unrelated companies
+Prairie Point Retail Co. [CRM],Harbor Point Financial [CRM],no,easy,Unrelated companies
+Quantum Peak Insurance [CRM],Summit Trail Outfitters [CRM],no,easy,Unrelated companies
+Thornbury & Cole Insurance Group [CRM],Blue Delta Foods [CRM],no,easy,Unrelated companies
+Grantline Media Group [CRM],Ironwood Construction Co. [CRM],no,medium,Unrelated companies
+Redwood Cloud Systems [CRM],Meadowlark Health [CRM],no,easy,Unrelated companies
+Harbor Point Financial [CRM],Cedar Vale Software LLC [CRM],no,easy,Unrelated companies
+Summit Trail Outfitters [CRM],Pinnacle Robotics [CRM],no,easy,Unrelated companies
+Blue Delta Foods [CRM],Lakeside Hospitality Group [CRM],no,medium,Unrelated companies
+Ironwood Construction Co. [CRM],Granite Peak Energy [CRM],no,easy,Unrelated companies
+Meadowlark Health [CRM],Willowbrook Pharma [CRM],no,easy,Unrelated companies
+Cedar Vale Software LLC [CRM],Copper Canyon Retail [CRM],no,easy,Unrelated companies
+Pinnacle Robotics [CRM],Stonebridge Advisory [CRM],no,medium,Unrelated companies
+Lakeside Hospitality Group [CRM],Northwind Freight [CRM],no,easy,Unrelated companies
+Granite Peak Energy [CRM],Verdant Agriculture [CRM],no,easy,Unrelated companies
+Willowbrook Pharma [CRM],Sable Point Media [CRM],no,easy,Unrelated companies
+Copper Canyon Retail [CRM],Terra Nova Analytics [CRM],no,medium,Unrelated companies
+Stonebridge Advisory [CRM],"Kingfisher Payments, Inc. [CRM]",no,easy,Unrelated companies
+Northwind Freight [CRM],Alderwood Insurance [CRM],no,easy,Unrelated companies
+Verdant Agriculture [CRM],Bright Harbor Logistics [CRM],no,easy,Unrelated companies
+"Silverline Logistics Group, Inc. [CRM]",Atlas Freight Solutions [CRM],no,medium,Unrelated companies
+Beacon Health Partners [CRM],Atlas Freight Logistics [CRM],no,easy,Unrelated companies
+Beacon Healthcare Systems [CRM],Brightpath Consulting [CRM],no,easy,Unrelated companies
+Nova Materials Inc. [CRM],Brightpath Digital [CRM],no,easy,Unrelated companies
+Nova Material Sciences LLC [CRM],Cobalt Ridge Manufacturing [CRM],no,medium,Unrelated companies
+Crestview Financial Group [CRM],Prairie Point Retail Co. [CRM],no,easy,Unrelated companies
+Crestview Capital Advisors [CRM],Quantum Peak Insurance [CRM],no,easy,Unrelated companies
+Atlas Freight Solutions [CRM],Thornbury & Cole Insurance Group [CRM],no,easy,Unrelated companies
+Atlas Freight Logistics [CRM],Grantline Media Group [CRM],no,medium,Unrelated companies
+Brightpath Consulting [CRM],Redwood Cloud Systems [CRM],no,easy,Unrelated companies
+Brightpath Digital [CRM],Harbor Point Financial [CRM],no,easy,Unrelated companies
+Cobalt Ridge Manufacturing [CRM],Summit Trail Outfitters [CRM],no,easy,Unrelated companies
+Prairie Point Retail Co. [CRM],Blue Delta Foods [CRM],no,medium,Unrelated companies
+Quantum Peak Insurance [CRM],Ironwood Construction Co. [CRM],no,easy,Unrelated companies
+Thornbury & Cole Insurance Group [CRM],Meadowlark Health [CRM],no,easy,Unrelated companies
+Grantline Media Group [CRM],Cedar Vale Software LLC [CRM],no,easy,Unrelated companies
+Redwood Cloud Systems [CRM],Pinnacle Robotics [CRM],no,medium,Unrelated companies
+Harbor Point Financial [CRM],Lakeside Hospitality Group [CRM],no,easy,Unrelated companies
+Summit Trail Outfitters [CRM],Granite Peak Energy [CRM],no,easy,Unrelated companies
+Blue Delta Foods [CRM],Willowbrook Pharma [CRM],no,easy,Unrelated companies
+Ironwood Construction Co. [CRM],Copper Canyon Retail [CRM],no,medium,Unrelated companies
+Meadowlark Health [CRM],Stonebridge Advisory [CRM],no,easy,Unrelated companies
+Cedar Vale Software LLC [CRM],Northwind Freight [CRM],no,easy,Unrelated companies
+Pinnacle Robotics [CRM],Verdant Agriculture [CRM],no,easy,Unrelated companies
+Lakeside Hospitality Group [CRM],Sable Point Media [CRM],no,medium,Unrelated companies
+Granite Peak Energy [CRM],Terra Nova Analytics [CRM],no,easy,Unrelated companies
+Willowbrook Pharma [CRM],"Kingfisher Payments, Inc. [CRM]",no,easy,Unrelated companies
+Copper Canyon Retail [CRM],Alderwood Insurance [CRM],no,easy,Unrelated companies
+Stonebridge Advisory [CRM],Bright Harbor Logistics [CRM],no,medium,Unrelated companies

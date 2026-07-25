@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:migrate": "node scripts/migrate.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
+    "google-auth-library": "^10.9.1",
     "next": "14.2.35",
     "pg": "^8.22.0",
     "react": "^18",

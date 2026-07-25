@@ -1,0 +1,14 @@
+From: Amir Haddad <amir.haddad@willowbrookpharma.com>
+To: Diego Marin <diego.marin@meridiananalytics.io>
+Subject: Data refresh timing
+Date: Thu, 27 Nov 2025 08:15:00 -0500
+
+Diego,
+
+Our commercial dashboards seem to refresh a few hours later than expected. Not urgent, but can support confirm the schedule?
+
+Thanks,
+Amir
+
+Dr. Amir Haddad
+Head of Commercial Analytics | Willowbrook Pharma

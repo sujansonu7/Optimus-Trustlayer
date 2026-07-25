@@ -1,0 +1,15 @@
+# Slack export — #eng-general
+# Workspace: Meridian Analytics
+# (read-only export)
+
+[Jan 8, 2026, 11:02 AM] Priya (Eng)
+Heads up: deploying Project Fathom v3.2 to prod tonight. That's the core Pulse platform for anyone newer to the team — codename never died.
+
+[Jan 8, 2026, 11:04 AM] Dev — Sanjay
+lol every new hire asks. Fathom == Meridian Pulse. Marketing calls it Pulse, we call it Fathom, billing calls it SKU-10045-ENT. Same thing.
+
+[Jan 8, 2026, 11:09 AM] Priya (Eng)
+Also the Insights Module (beta) work is bundled in this release. Reminder that "beta" is a lie at this point — Project Lighthouse has been GA and billed since Q3 2025. We just never took the tag off.
+
+[Jan 8, 2026, 11:11 AM] Dev — Sanjay
+One of these days. Lighthouse == Meridian Insights Add-on == SKU-20087-ADD for the record.

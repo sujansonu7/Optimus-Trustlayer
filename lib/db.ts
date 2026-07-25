@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, type QueryResult, type QueryResultRow } from "pg";
 
 // Reuse a single pool across hot-reloads / serverless invocations.
 declare global {
@@ -6,7 +6,7 @@ declare global {
   var _pgPool: Pool | undefined;
 }
 
-function getPool(): Pool {
+export function getPool(): Pool {
   if (!global._pgPool) {
     global._pgPool = new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -39,4 +39,16 @@ export async function isDatabaseReachable(): Promise<boolean> {
     console.error("Database reachability check failed:", err);
     return false;
   }
+}
+
+/**
+ * Run a parameterized query against the shared pool. Thin wrapper so callers
+ * don't each reach for the pool. Always use $1, $2… placeholders — never string
+ * interpolation — so user input can't become SQL.
+ */
+export async function query<T extends QueryResultRow = QueryResultRow>(
+  text: string,
+  params?: unknown[]
+): Promise<QueryResult<T>> {
+  return getPool().query<T>(text, params as never);
 }

@@ -1,0 +1,21 @@
+# Slack export — #account-handoffs
+# Workspace: Meridian Analytics
+# (read-only export)
+
+[Oct 22, 2025, 9:14 AM] Diane Kessler
+Reassigning Thornbury & Cole to @sara.lindqvist effective today, Jordan's last day is Friday. Sara, Jordan will send the context doc before he's out.
+
+[Oct 22, 2025, 9:16 AM] Sara Lindqvist
+Got it, thanks. I'll reach out to Edwin Cole to introduce myself this week.
+
+[Oct 22, 2025, 9:20 AM] Jordan Ellis
+Context doc incoming. It's a clean account, renewal in November. You're in good shape @sara.lindqvist.
+
+[Oct 22, 2025, 9:22 AM] Nia Oduya
+Updated the Renewals Tracker owner column to Sara. Note: someone should also fix the CRM Account Owner field — I don't have edit rights on that object.
+
+[Nov 3, 2025, 4:41 PM] Diego Marin
+Reassigning nothing today, just noting Nova Material Sciences kickoff went great. Different company from Nova Materials (Pittsburgh) — please don't merge them in any reports 🙏
+
+[Jan 15, 2026, 10:05 AM] Jae Park
+Marked Grantline Media as Churned in the tracker — customer confirmed non-renewal yesterday, contract ends 1/31. Heads up @diego.marin the CRM still says Active.

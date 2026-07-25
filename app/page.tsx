@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isDatabaseReachable } from "@/lib/db";
 
 // Check reachability on every request rather than caching at build time.
@@ -21,6 +22,21 @@ export default async function Home() {
           Database not connected
         </span>
       )}
+
+      <nav className="mt-2 flex items-center gap-4 text-sm">
+        <Link
+          href="/sources"
+          className="text-blue-700 hover:underline dark:text-blue-400"
+        >
+          Sources
+        </Link>
+        <Link
+          href="/settings"
+          className="text-blue-700 hover:underline dark:text-blue-400"
+        >
+          Settings
+        </Link>
+      </nav>
     </main>
   );
 }

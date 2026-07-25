@@ -1,0 +1,15 @@
+Gong Call Recording — Auto-Transcribed
+Account: Redwood Cloud Systems
+Date: February 11, 2026, 1:00 PM PST
+Duration: 25 min
+Participants: Sara Lindqvist (Meridian Analytics, AE), Nadia Frost (VP Engineering, Redwood Cloud Systems)
+
+Sara Lindqvist: Adoption's looking strong, Nadia. Weekly active users on Pulse are up quarter over quarter.
+
+Nadia Frost: The eng leads finally trust the numbers, which is half the battle. The new report builder helped a lot.
+
+Sara Lindqvist: Love to hear it. Anything on the roadmap you want me to push for internally?
+
+Nadia Frost: More granular API usage metrics, if you can. Otherwise we're in a great spot heading into renewal.
+
+Sara Lindqvist: I'll log that request. And renewal should be a formality given where we are.

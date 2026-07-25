@@ -1,0 +1,14 @@
+From: Sara Lindqvist <sara.lindqvist@meridiananalytics.io>
+To: Nia Oduya <n.oduya@meridiananalytics.io>
+Cc: RevOps <revops@meridiananalytics.io>
+Subject: Update Cobalt Ridge renewal date -> 6/30/2026
+Date: Wed, 11 Mar 2026 09:35:00 -0400
+
+Nia,
+
+Cobalt Ridge signed the renewal amendment — new term ends June 30, 2026 (order form CRM-CBR-2026-0311, attached earlier). Can you update the Renewals Tracker? The original Sept 30 date is superseded.
+
+I'll try to fix the CRM field too but I'm slammed today — the tracker is the priority since forecasting pulls from it.
+
+Thanks,
+Sara

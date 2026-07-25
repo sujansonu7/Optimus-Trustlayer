@@ -1,0 +1,13 @@
+From: Diane Kessler <diane.kessler@meridiananalytics.io>
+To: Board Deck Working Group <deck-wg@meridiananalytics.io>
+Cc: Diego Marin <diego.marin@meridiananalytics.io>
+Subject: Q1 board deck — Top Accounts by ARR slide
+Date: Mon, 02 Mar 2026 17:05:00 -0600
+
+Team,
+
+For slide 14 (Top Accounts by ARR), I've pulled the headline numbers. Note I've listed Quantum Peak at $410K — that's inclusive of the services engagement this year, since the board likes to see total account value. Finance may show a different recurring figure; that's expected.
+
+Please sanity-check the rest against your books before Thursday.
+
+Diane

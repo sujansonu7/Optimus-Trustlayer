@@ -1,0 +1,13 @@
+From: Nadia Frost <nadia.frost@redwoodcloud.com>
+To: Sara Lindqvist <sara.lindqvist@meridiananalytics.io>
+Subject: Q2 business review — scheduling
+Date: Tue, 10 Jun 2025 11:00:00 -0700
+
+Hi Sara,
+
+Can we lock in our Q2 review for the last week of the month? Want to walk through adoption on the new dashboards with my eng leads.
+
+Nadia
+
+Nadia Frost
+VP Engineering | Redwood Cloud Systems

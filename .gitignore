@@ -32,6 +32,11 @@ yarn-error.log*
 *.pem
 *.key
 
+# Google service-account key (never commit)
+google-service-account.json
+*-service-account.json
+*.credentials.json
+
 # vercel
 .vercel
 
