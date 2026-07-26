@@ -10,6 +10,10 @@ import { detectConflicts } from "@/lib/conflicts/detect";
 export default async function ConflictYield() {
   let report;
   try {
+    // Deliberately UNFILTERED by connection state: this grades how well the
+    // detector did against the fixture, which is a property of the build, not of
+    // who can currently see which source. Revoking a source must not move the
+    // score. (Ask, /conflicts and the agent tools all pass `connected`.)
     report = await detectConflicts();
   } catch {
     return null; // no facts yet / DB down — the page already surfaces that.

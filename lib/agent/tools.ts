@@ -305,7 +305,7 @@ export async function executeTool(
     case "read_source_passage":
       return readSourcePassage(input);
     case "list_conflicts":
-      return listConflicts(input);
+      return listConflicts(input, ctx);
     case "execute_python":
       return executePython(input, ctx);
     case "draft_document":
@@ -422,9 +422,14 @@ async function readSourcePassage(input: Record<string, unknown>): Promise<ToolOu
   };
 }
 
-async function listConflicts(input: Record<string, unknown>): Promise<ToolOutcome> {
+async function listConflicts(
+  input: Record<string, unknown>,
+  ctx: Session
+): Promise<ToolOutcome> {
   const filter = typeof input.entity === "string" ? input.entity.trim().toLowerCase() : "";
-  const report = await detectConflicts();
+  // Connected sources only — a revoked source must not reach the model, not even
+  // as a losing value or a source name inside a conflict card.
+  const report = await detectConflicts({ connected: ctx.connected });
   let conflicts = report.conflicts;
   if (filter) {
     conflicts = conflicts.filter(

@@ -191,7 +191,10 @@ export async function buildGraphExport(ctx: Session): Promise<GraphExportResult>
 
   // 3) The arbitrated winners for every conflicted (entity, attribute), from the
   //    SAME detector the /conflicts page and Ask use — one source of truth.
-  const report = await detectConflicts();
+  //    Scoped to the connected tools, matching the fact query above: otherwise a
+  //    disconnected source's value would be written into graph.json as the
+  //    winner and cited to a connected passage that says something different.
+  const report = await detectConflicts({ connected });
   const conflictByKey = new Map<string, Conflict>();
   for (const c of report.conflicts) conflictByKey.set(`${c.entityKey}::${c.attribute}`, c);
 

@@ -199,6 +199,9 @@ export async function materializeDecisions(): Promise<{ logged: number; total: n
   /* --- Arbitrations: settled source disagreements ------------------- */
   // Ask for the PRISTINE automatic decision (ignore any existing overrides), so
   // the logged winner/loser reflect what TrustLayer decided on its own.
+  // Also deliberately UNFILTERED by connection state: the decision log is a
+  // historical record of what was decided when the graph was built. Revoking a
+  // source later does not un-make the decision that was taken.
   const report = await detectConflicts({ applyOverrides: false });
   for (const c of report.conflicts) {
     const winner = c.values.find((v) => v.isWinner) ?? c.values[0];

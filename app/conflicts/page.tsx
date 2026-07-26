@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { detectConflicts, type Conflict } from "@/lib/conflicts/detect";
+import { loadConnections } from "@/lib/ask/sources";
+import { SOURCE_LABEL } from "@/lib/ask/types";
 import ConflictsClient from "./ConflictsClient";
 
 // Conflicts are a live view over the ledger — recompute on every request.
@@ -8,8 +10,15 @@ export const dynamic = "force-dynamic";
 export default async function ConflictsPage() {
   let conflicts: Conflict[] = [];
   let migrated = true;
+  let disconnected: string[] = [];
   try {
-    ({ conflicts } = await detectConflicts());
+    // Same revocation rule as Ask: a disconnected source is excluded at the SQL
+    // boundary, so its values, name and dates cannot appear on any card here.
+    const conns = await loadConnections();
+    disconnected = conns.filter((c) => !c.connected).map((c) => SOURCE_LABEL[c.source_tool]);
+    ({ conflicts } = await detectConflicts({
+      connected: conns.filter((c) => c.connected).map((c) => c.source_tool),
+    }));
   } catch {
     // Ledger not built yet (no facts) or DB unreachable.
     migrated = false;
@@ -46,7 +55,22 @@ export default async function ConflictsPage() {
           .
         </div>
       ) : (
-        <ConflictsClient conflicts={conflicts} />
+        <>
+          {disconnected.length > 0 && (
+            <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
+              <span className="font-semibold">
+                {disconnected.join(", ")} {disconnected.length === 1 ? "is" : "are"} disconnected.
+              </span>{" "}
+              These conflicts are computed from the remaining sources only — nothing
+              from a disconnected source is shown here. Reconnect from{" "}
+              <Link href="/admin" className="font-semibold underline">
+                /admin
+              </Link>{" "}
+              to restore it.
+            </div>
+          )}
+          <ConflictsClient conflicts={conflicts} />
+        </>
       )}
     </main>
   );

@@ -160,7 +160,7 @@ function sourceList(sources: ConflictSource[]): string {
 /* ------------------------------------------------------------------ */
 
 export async function detectConflicts(
-  opts?: { applyOverrides?: boolean }
+  opts?: { applyOverrides?: boolean; connected?: SourceTool[] }
 ): Promise<ConflictReport> {
   // Human overrides from the decision log (a reverted merge splits an alias out;
   // a reverted arbitration flips the winner). Materialization asks for the
@@ -170,13 +170,23 @@ export async function detectConflicts(
       ? { splitKeys: new Set<string>(), arbOverrides: new Map<string, string>() }
       : await loadDecisionOverrides();
 
+  // Trust is revocable: when the caller passes the connected tools, a
+  // disconnected source is excluded at the SQL boundary — not filtered out of
+  // the rendered card afterwards. Its values, its name, and its dates cannot
+  // reach arbitration, the rule sentence, or the model. Omitting `connected`
+  // keeps the unfiltered view, which is what the /admin yield counter and the
+  // decision log want: both grade what was built, independent of who can
+  // currently see it.
+  const connected = opts?.connected;
   const { rows } = await query<RawFact>(
     // Cast the timestamp to a stable ISO string here — the pg driver otherwise
     // hands back a JS Date, and everything downstream expects a string.
     `select entity_ref, attribute, value, source_tool, source_doc,
             to_char(doc_timestamp at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as doc_timestamp
        from facts
-      where superseded_at is null`
+      where superseded_at is null${connected ? `
+        and source_tool = any($1::source_tool[])` : ""}`,
+    connected ? [connected] : []
   );
 
   // Ratified declarations only — a proposed declaration is an opinion, not yet

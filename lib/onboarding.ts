@@ -162,7 +162,9 @@ export async function proofQuestions(): Promise<ProofQuestion[]> {
   const usedEntities = new Set<string>();
 
   /* --- Conflict proofs: real cross-source disagreements ------------- */
-  const report = await detectConflicts();
+  // Connected sources only — the proof copy quotes the winning value, so an
+  // unfiltered detector could advertise a revoked source's number.
+  const report = await detectConflicts({ connected });
   for (const c of report.conflicts) {
     if (out.length >= 3) break;
     const make = ATTR_QUESTION[c.attribute];
