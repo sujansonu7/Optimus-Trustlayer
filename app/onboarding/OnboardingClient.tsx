@@ -150,7 +150,7 @@ function Welcome({ onStart }: { onStart: () => void }) {
         already answer — with citations, freshness, and both sides of every conflict shown.
       </p>
       <ul className="mt-5 space-y-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-        <li>· Real data, real database — nothing is mocked.</li>
+        <li>· Real ingestion, real database. Source connections are simulated for this demo — the pipeline they trigger is real.</li>
         <li>· Your Renewals Sheet connects live to Google Sheets.</li>
         <li>· Target: a working, trustworthy knowledge base in under 15 minutes.</li>
       </ul>
