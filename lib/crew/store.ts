@@ -38,6 +38,7 @@ type WorkstreamRow = {
   work_product_id: string | null;
   quality: string | null;
   error: string | null;
+  updated_at: string | null;
 };
 
 function mapWorkstream(r: WorkstreamRow): CrewWorkstream {
@@ -58,12 +59,14 @@ function mapWorkstream(r: WorkstreamRow): CrewWorkstream {
     workProductId: r.work_product_id,
     quality: (r.quality as BriefQuality | null) ?? null,
     error: r.error,
+    updatedAt: r.updated_at,
   };
 }
 
 const WORKSTREAM_COLS = `id, run_id, seq, title, goal, kind, inline_answer,
   constraints_json, done_criteria_json, depends_on, brief_json, status,
-  session_id, work_product_id, quality, error`;
+  session_id, work_product_id, quality, error,
+  to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at`;
 
 /* ------------------------------------------------------------------ */
 /* Create                                                              */
@@ -187,11 +190,25 @@ export async function updateWorkstream(
     stamp?: "dispatched" | "finished";
   }
 ): Promise<void> {
+  // session_id / work_product_id are FKs. Both are written AFTER the agent run
+  // finishes, by which point "Clear all agent sessions" (or "Clear library") can
+  // already have removed the row we are about to point at — the same race that
+  // was hardened for agent_steps in lib/agent/library.ts. Adopt only an id that
+  // still exists; otherwise keep what's there (the ON DELETE SET NULL FK will
+  // have nulled it). A bookkeeping write must never fail a delivered run.
   await query(
     `update crew_workstreams
         set status = $2,
-            session_id = coalesce($3, session_id),
-            work_product_id = coalesce($4, work_product_id),
+            session_id = case
+              when $3::uuid is null then session_id
+              when exists (select 1 from agent_sessions where id = $3::uuid) then $3::uuid
+              else session_id
+            end,
+            work_product_id = case
+              when $4::uuid is null then work_product_id
+              when exists (select 1 from work_products where id = $4::uuid) then $4::uuid
+              else work_product_id
+            end,
             error = $5,
             dispatched_at = case when $6 = 'dispatched' then now() else dispatched_at end,
             finished_at = case when $6 = 'finished' then now() else finished_at end,

@@ -14,7 +14,7 @@ import { runAgent } from "@/lib/agent/loop";
 import type { AgentStep, WorkProduct } from "@/lib/agent/types";
 import { fileWorkProductBack } from "./fileback";
 import { getWorkstream, loadRun, setRunStatus, updateWorkstream } from "./store";
-import { MAX_PARALLEL, type CrewStatus, type CrewWorkstream } from "./types";
+import { MAX_PARALLEL, isStuckRunning, type CrewStatus, type CrewWorkstream } from "./types";
 
 export type CrewDispatchEvent =
   | { type: "run_status"; status: "triaged" | "dispatching" | "done" }
@@ -150,10 +150,18 @@ export async function redispatchWorkstream(
     await emit({ type: "error", message: "Inline items are answered directly and don’t dispatch to the agent." });
     return;
   }
-  if (w.status !== "needs_input" && w.status !== "queued") {
+  // A card stuck in `running` past the heartbeat window is a dead dispatch (the
+  // route was killed mid-run), not work in progress — it used to be recoverable
+  // only by hand-editing the database. Retry it like any other stranded card.
+  const stranded =
+    w.status === "needs_input" || w.status === "queued" || isStuckRunning(w);
+  if (!stranded) {
     await emit({
       type: "error",
-      message: "Only cards that are queued or need input can be retried.",
+      message:
+        w.status === "running"
+          ? "That workstream is still running — give it a moment before retrying."
+          : "Only cards that are queued, running-but-stalled, or needing input can be retried.",
     });
     return;
   }
@@ -205,7 +213,31 @@ export async function dispatchRun(
     const batch = ready.slice(0, limit);
     for (const w of batch) pending.splice(pending.indexOf(w), 1);
 
-    await Promise.all(batch.map((w) => dispatchOne(w, emit, signal)));
+    // One card must never take the run down with it. Before this, any throw from
+    // dispatchOne rejected the Promise.all, skipped setRunStatus below, and left
+    // every remaining card stranded in `queued` with the run looking alive.
+    await Promise.all(
+      batch.map(async (w) => {
+        try {
+          await dispatchOne(w, emit, signal);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          console.error(`crew: workstream ${w.seq} failed hard:`, err);
+          try {
+            await updateWorkstream(w.id, "needs_input", { error: message, stamp: "finished" });
+          } catch {
+            /* the ledger itself is unreachable — the emit below still tells the board */
+          }
+          await emit({
+            type: "workstream",
+            id: w.id,
+            seq: w.seq,
+            status: "needs_input",
+            error: message,
+          });
+        }
+      })
+    );
     for (const w of batch) satisfied.add(w.seq);
   }
 

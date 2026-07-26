@@ -93,7 +93,29 @@ export type CrewWorkstream = {
   workProductId: string | null;
   quality: BriefQuality | null;
   error: string | null;
+  /** Last ledger write for this card (ISO). Used to spot a dead `running` card. */
+  updatedAt: string | null;
 };
+
+/**
+ * How long a card may sit in `running` before we treat the agent as dead.
+ *
+ * The dispatch route's budget is 300s (app/api/crew/dispatch/route.ts). When the
+ * function is killed mid-run — a route timeout, a crashed worker, a closed
+ * laptop — the ledger row keeps the `running` it was given at dispatch and
+ * nothing ever writes it again. Past this threshold the card is stranded, not
+ * working, so Retry is offered.
+ */
+export const STALE_RUNNING_MS = 6 * 60 * 1000;
+
+/** True when a card claims to be running but nothing has written it in too long. */
+export function isStuckRunning(w: { status: CrewStatus; updatedAt: string | null }): boolean {
+  if (w.status !== "running") return false;
+  if (!w.updatedAt) return true; // no heartbeat at all
+  const t = new Date(w.updatedAt).getTime();
+  if (Number.isNaN(t)) return true;
+  return Date.now() - t > STALE_RUNNING_MS;
+}
 
 /** A full run with its board. */
 export type CrewRun = {

@@ -16,7 +16,7 @@ import type {
   CrewStatus,
   CrewWorkstream,
 } from "@/lib/crew/types";
-import { BOARD_COLUMNS, MAX_PARALLEL, PARALLEL_MIN_RATED, PARALLEL_QUALITY_BAR, parallelUnlocked } from "@/lib/crew/types";
+import { BOARD_COLUMNS, MAX_PARALLEL, PARALLEL_MIN_RATED, PARALLEL_QUALITY_BAR, isStuckRunning, parallelUnlocked } from "@/lib/crew/types";
 import BriefView from "./BriefView";
 import WorkProductView from "../WorkProductView";
 import { recordQualityAction, setParallelAction } from "./actions";
@@ -98,6 +98,13 @@ export default function CrewClient({
   const dispatchAbort = useRef<AbortController | null>(null);
 
   const effStatus = (w: CrewWorkstream): CrewStatus => liveStatus[w.id] ?? w.status;
+
+  // A card is STALLED when the ledger says "running" but this session has no live
+  // stream for it and its last write is older than the heartbeat window — i.e. the
+  // dispatch that owned it died (route timeout, closed tab, crashed worker).
+  // A card we are actively streaming or retrying is never stalled, however long.
+  const isStalled = (w: CrewWorkstream): boolean =>
+    liveStatus[w.id] === undefined && !retrying[w.id] && isStuckRunning(w);
   const effQuality = (w: CrewWorkstream): BriefQuality | null => quality[w.id] ?? w.quality;
 
   /* ---- Triage -------------------------------------------------------- */
@@ -446,6 +453,7 @@ export default function CrewClient({
                 key={w.id}
                 w={w}
                 status={effStatus(w)}
+                stalled={isStalled(w)}
                 steps={steps[w.id] ?? []}
                 product={products[w.id] ?? null}
                 filedBackDoc={filedBack[w.id] ?? null}
@@ -596,6 +604,7 @@ function humanizeError(raw: string): string {
 function DetailCard({
   w,
   status,
+  stalled,
   steps,
   product,
   filedBackDoc,
@@ -607,6 +616,7 @@ function DetailCard({
 }: {
   w: CrewWorkstream;
   status: CrewStatus;
+  stalled: boolean;
   steps: AgentStep[];
   product: { id: string; wp: WorkProduct } | null;
   filedBackDoc: string | null;
@@ -648,10 +658,16 @@ function DetailCard({
         {steps.length > 0 && <StepTimeline steps={steps} running={status === "running" || retrying} />}
 
         {/* Stranded card — needs input or never dispatched — with a Retry action */}
-        {(status === "needs_input" || status === "queued") && (
+        {(status === "needs_input" || status === "queued" || stalled) && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
             <p>
-              {status === "queued" ? (
+              {stalled ? (
+                <>
+                  This one has been sitting in <span className="font-medium">running</span> with no
+                  activity — the dispatch that owned it stopped before finishing. Nothing was lost;
+                  run it again.
+                </>
+              ) : status === "queued" ? (
                 <>This workstream hasn’t run yet.</>
               ) : error ? (
                 <>The agent couldn’t finish this one: {humanizeError(error)}</>
@@ -670,6 +686,8 @@ function DetailCard({
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
                     Retrying…
                   </span>
+                ) : stalled ? (
+                  "Run it again →"
                 ) : status === "queued" ? (
                   "Dispatch this workstream →"
                 ) : (
