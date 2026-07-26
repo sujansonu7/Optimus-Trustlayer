@@ -2,6 +2,7 @@ import Link from "next/link";
 import { query } from "@/lib/db";
 import AdminClient from "./AdminClient";
 import ConflictYield from "./ConflictYield";
+import Gate1Scoreboard from "./Gate1Scoreboard";
 import SourceToggles from "./SourceToggles";
 import ResetDemo from "./ResetDemo";
 import AgentSessions from "./AgentSessions";
@@ -141,6 +142,7 @@ export default async function AdminPage() {
 
       {summary.migrated && (
         <div className="mt-8">
+          <Gate1Scoreboard />
           <ConflictYield />
         </div>
       )}

@@ -16,7 +16,7 @@ rather than guessing.
 | Gate | Guide's requirement | Verdict |
 |---|---|---|
 | **Gate 0** | App live, green "Database connected" badge gated on a real round-trip | ✅ **PASS** |
-| **Gate 1** | Rendered auto-merge **precision scoreboard** vs `fixture/labeled_pairs.csv`, ≥ 0.98 green | ❌ **NOT BUILT** |
+| **Gate 1** | Rendered auto-merge **precision scoreboard** vs `fixture/labeled_pairs.csv`, ≥ 0.98 green | ❌ **NOT BUILT** at audit time → ✅ **PASS at 100.0%** (built — see §7) |
 | **Gate 2** | Revoke a source → answer changes, confidence drops, **nothing from it appears anywhere** | ⚠️ **PARTIAL** at audit time → ✅ **PASS** (fixed — see §7) |
 | **Gate 3** | Every automatic decision visible and reversible in one place | ✅ **PASS** (one caveat) |
 | **Gate W-A** | Wipe all agent sessions; knowledge unaffected | ✅ **PASS** |
@@ -652,3 +652,64 @@ cards and the original rule sentences. `npx tsc --noEmit` passes.
 
 **Not addressed by this fix** (documented in §2, still true): `/facts` and `/decisions` show
 revoked sources' data by design, as raw ledger and historical log respectively.
+
+### Fix #2 — Gate 1 built · entity-resolution precision scoreboard
+
+**Finding #2 from §4.** New `lib/entities/gate1.ts` grades the live resolver against
+`fixture/labeled_pairs.csv`; new `app/admin/Gate1Scoreboard.tsx` renders it above the conflict
+yield. **The existing resolver was not modified** — the scoreboard calls `entityKey` +
+`makeResolver` exactly as a normal caller would and only compares the answers.
+
+The canonical universe is rebuilt the same way every runtime call site builds it (CRM + spreadsheet
+`entity_ref`s currently in the ledger), so this scores the resolver the product is actually running.
+Decision-log overrides are deliberately **not** applied — the gate measures the *automatic*
+decision, for the same reason arbitrations are logged pristine.
+
+**On reading the answer key.** The standing rule is that the app never opens `labeled_pairs.csv`.
+Milestone 5 carves out exactly this one exception, and the carve-out is structural, not a promise:
+nothing in the module feeds the resolver, the only importer is the `/admin` server component, and
+`app/api/source/route.ts` still refuses to serve either answer key over HTTP. The rationale is
+written at the top of `lib/entities/gate1.ts`.
+
+**Live result — GATE 1 PASSES:**
+
+| | |
+|---|---|
+| **Auto-merge precision** | **100.0%** (bar 98%) — green |
+| Merges made | 11, of which **0 wrong** |
+| **Near-miss pairs kept apart** | **10 / 10** — the gate's second clause |
+| Labeled pairs graded | 201 |
+| Recall *(not gated)* | 13% — 75 pairs it should have merged and didn't |
+
+Precision is perfect because the resolver only folds an alias in when it is an unambiguous prefix
+of exactly one canonical account, and two canonical names can never merge — which is precisely why
+the near-miss traps (Beacon, Nova, Crestview, Atlas, Brightpath) all survive.
+
+The same conservatism is why recall is 13%, and the scoreboard says so plainly rather than hiding
+it: `SLG`, `SLG-West` and `silverlinelogistics.io` are not token prefixes of anything, so they are
+left unlinked rather than guessed. Those 75 misses are listed in a collapsed panel, labelled
+"recall, not precision". **This is the honest reading of the gate** — the guide sets the stop-test
+on precision with near-misses kept separate, both of which are met — but it also means the
+Silverline identity cluster is only partially resolved, and improving recall is the natural next
+piece of Milestone 5 work (alongside `/entities` and `/review`, which remain missing).
+
+`npx tsc --noEmit` passes; `npx next lint` reports nothing in the new files.
+
+---
+
+## 8. Pre-existing issue found while verifying (not introduced by any fix here)
+
+**`npm run build` fails on `main`, and did so before this work started.** Confirmed by stashing all
+changes and linting clean `HEAD`:
+
+```
+./app/crew/CrewClient.tsx
+  197:23  Error: '_drop' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+./app/crew/page.tsx
+  22:7    Error: 'initialSteps' is never reassigned. Use 'const' instead.  prefer-const
+```
+
+Next.js runs ESLint as part of `next build` and treats these as errors, so the production build
+aborts. `npx tsc --noEmit` passes and `npm run dev` is unaffected, which is why this went unnoticed
+— but **a Vercel deploy would fail**. Both are one-line fixes in files untouched by this audit;
+left alone here rather than folded into an unrelated commit.
