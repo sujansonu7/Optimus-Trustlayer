@@ -1,3 +1,6 @@
+"use client";
+
+import { useFormState } from "react-dom";
 import Link from "next/link";
 import type {
   Declaration,
@@ -6,7 +9,16 @@ import type {
   StalenessTier,
   VolatilityClass,
 } from "@/lib/settings";
-import { createDeclaration, saveDeclaration, saveFreshness } from "./actions";
+import {
+  createDeclaration,
+  saveDeclaration,
+  saveFreshness,
+  type SettingsFormState,
+} from "./actions";
+
+/* Initial form state. Defined here (not in the "use server" actions file, which
+ * may only export async functions). */
+const IDLE_STATE: SettingsFormState = { ok: false, error: null };
 
 /* Shared field styling. */
 const input =
@@ -15,6 +27,29 @@ const label =
   "mb-1 block text-xs font-medium uppercase tracking-wide text-neutral-400";
 const saveBtn =
   "rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 active:bg-blue-700";
+
+/* Inline, styled validation message — replaces the raw Next.js error page. */
+function FormError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p
+      role="alert"
+      className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300"
+    >
+      {message}
+    </p>
+  );
+}
+
+/* Small success note shown briefly after a save. */
+function FormSaved({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <p className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300">
+      Saved.
+    </p>
+  );
+}
 
 export default function SettingsClient({
   declarations,
@@ -109,9 +144,10 @@ function statusChip(status: DeclarationStatus): string {
 }
 
 function DeclarationCard({ d }: { d: Declaration }) {
+  const [state, formAction] = useFormState(saveDeclaration, IDLE_STATE);
   return (
     <form
-      action={saveDeclaration}
+      action={formAction}
       className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/40"
     >
       <input type="hidden" name="id" value={d.id} />
@@ -135,6 +171,7 @@ function DeclarationCard({ d }: { d: Declaration }) {
           name="statement"
           defaultValue={d.statement}
           rows={2}
+          required
           className={input + " resize-y"}
         />
       </div>
@@ -175,14 +212,18 @@ function DeclarationCard({ d }: { d: Declaration }) {
           Save
         </button>
       </div>
+
+      <FormError message={state.error} />
+      <FormSaved show={state.ok} />
     </form>
   );
 }
 
 function NewDeclarationCard() {
+  const [state, formAction] = useFormState(createDeclaration, IDLE_STATE);
   return (
     <form
-      action={createDeclaration}
+      action={formAction}
       className="flex flex-col gap-3 rounded-xl border border-dashed border-neutral-300 bg-neutral-50/50 p-4 dark:border-neutral-700 dark:bg-neutral-900/20"
     >
       <span className="text-xs font-medium uppercase tracking-wide text-neutral-400">
@@ -191,6 +232,7 @@ function NewDeclarationCard() {
       <textarea
         name="statement"
         rows={2}
+        required
         placeholder="e.g. Billing is the system of record for invoiced amounts."
         className={input + " resize-y"}
       />
@@ -204,6 +246,9 @@ function NewDeclarationCard() {
           Add
         </button>
       </div>
+
+      <FormError message={state.error} />
+      <FormSaved show={state.ok} />
     </form>
   );
 }
@@ -235,9 +280,10 @@ function tierChip(tier: StalenessTier): string {
 }
 
 function FreshnessCard({ f }: { f: FreshnessRow }) {
+  const [state, formAction] = useFormState(saveFreshness, IDLE_STATE);
   return (
     <form
-      action={saveFreshness}
+      action={formAction}
       className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/40"
     >
       <input type="hidden" name="id" value={f.id} />
@@ -293,6 +339,9 @@ function FreshnessCard({ f }: { f: FreshnessRow }) {
           Save
         </button>
       </div>
+
+      <FormError message={state.error} />
+      <FormSaved show={state.ok} />
     </form>
   );
 }
