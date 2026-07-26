@@ -154,6 +154,50 @@ export async function loadRun(runId: string): Promise<CrewRun | null> {
   };
 }
 
+/**
+ * Recent runs, newest first, for the /crew history strip.
+ *
+ * Without this the board could only ever load the LATEST run, so starting a new
+ * brain-dump made every un-rated card from the previous one unreachable — and
+ * each unreachable card is a brief-quality rating that Gate W-B never counts.
+ * `unrated` is what still needs the owner's one-tap verdict.
+ */
+export type CrewRunSummary = {
+  id: string;
+  brainDump: string;
+  createdAt: string;
+  total: number;
+  unrated: number;
+};
+
+export async function listRunSummaries(limit = 12): Promise<CrewRunSummary[]> {
+  const { rows } = await query<{
+    id: string;
+    brain_dump: string;
+    created_at: string;
+    total: string;
+    unrated: string;
+  }>(
+    `select r.id, r.brain_dump,
+            to_char(r.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
+            count(w.id)::text as total,
+            count(w.id) filter (where w.status = 'review')::text as unrated
+       from crew_runs r
+       left join crew_workstreams w on w.run_id = r.id
+      group by r.id, r.brain_dump, r.created_at
+      order by r.created_at desc
+      limit $1`,
+    [limit]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    brainDump: r.brain_dump,
+    createdAt: r.created_at,
+    total: Number(r.total) || 0,
+    unrated: Number(r.unrated) || 0,
+  }));
+}
+
 /** The most recent run, for the /crew board on load. */
 export async function loadLatestRun(): Promise<CrewRun | null> {
   const { rows } = await query<{ id: string }>(

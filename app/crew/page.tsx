@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { isDatabaseReachable } from "@/lib/db";
-import { loadLatestRun, loadParallelEnabled, briefQualityStats } from "@/lib/crew/store";
+import {
+  loadLatestRun,
+  loadRun,
+  listRunSummaries,
+  loadParallelEnabled,
+  briefQualityStats,
+  type CrewRunSummary,
+} from "@/lib/crew/store";
 import { loadStepsForSessions } from "@/lib/agent/library";
 import type { AgentStep } from "@/lib/agent/types";
 import type { BriefQualityStats, CrewRun } from "@/lib/crew/types";
@@ -9,8 +16,13 @@ import CrewClient from "./CrewClient";
 // Reflect current DB state on every request.
 export const dynamic = "force-dynamic";
 
-export default async function CrewPage() {
+export default async function CrewPage({
+  searchParams,
+}: {
+  searchParams?: { run?: string };
+}) {
   const dbConnected = await isDatabaseReachable();
+  const wantedRun = typeof searchParams?.run === "string" ? searchParams.run : null;
 
   // Load the board + settings, tolerating a database that hasn't been migrated
   // to 0013 yet (the page still renders with an explanatory banner).
@@ -20,14 +32,19 @@ export default async function CrewPage() {
   // Persisted step logs, keyed by WORKSTREAM id, so each card's timeline survives
   // a page reload (the live SSE steps are gone after a refresh).
   const initialSteps: Record<string, AgentStep[]> = {};
+  let runs: CrewRunSummary[] = [];
   let migrated = true;
   if (dbConnected) {
     try {
-      [initialRun, parallelEnabled, stats] = await Promise.all([
-        loadLatestRun(),
+      [initialRun, parallelEnabled, stats, runs] = await Promise.all([
+        // ?run=<id> opens an earlier board so its un-rated briefs stay reachable;
+        // falling back to the latest run keeps the default behaviour unchanged.
+        wantedRun ? loadRun(wantedRun) : loadLatestRun(),
         loadParallelEnabled(),
         briefQualityStats(),
+        listRunSummaries(),
       ]);
+      if (!initialRun) initialRun = await loadLatestRun();
       const withSession = (initialRun?.workstreams ?? []).filter((w) => w.sessionId);
       if (withSession.length > 0) {
         const bySession = await loadStepsForSessions(withSession.map((w) => w.sessionId as string));
@@ -73,12 +90,16 @@ export default async function CrewPage() {
           this page.
         </div>
       ) : (
-        <CrewClient
-          initialRun={initialRun}
-          parallelEnabled={parallelEnabled}
-          qualityStats={stats}
-          initialSteps={initialSteps}
-        />
+        <>
+          <RunHistory runs={runs} currentId={initialRun?.id ?? null} />
+          <CrewClient
+            key={initialRun?.id ?? "none"}
+            initialRun={initialRun}
+            parallelEnabled={parallelEnabled}
+            qualityStats={stats}
+            initialSteps={initialSteps}
+          />
+        </>
       )}
 
       {/* Footer nav */}
@@ -96,5 +117,73 @@ export default async function CrewPage() {
         ))}
       </nav>
     </main>
+  );
+}
+
+/**
+ * Earlier brain-dumps, so their un-rated briefs stay reachable. Plain links with
+ * ?run=<id> — no client state, and the board re-mounts on the new run's id.
+ * The amber count is briefs still awaiting a quality verdict; those are exactly
+ * the ratings Gate W-B needs, and they used to be lost the moment you started a
+ * new brain-dump.
+ */
+function RunHistory({ runs, currentId }: { runs: CrewRunSummary[]; currentId: string | null }) {
+  if (runs.length <= 1) return null;
+  const pendingTotal = runs.reduce((n, r) => n + r.unrated, 0);
+
+  return (
+    <div className="mb-5 rounded-xl border border-neutral-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-950">
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Previous brain-dumps
+        </span>
+        {pendingTotal > 0 && (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+            {pendingTotal} brief{pendingTotal === 1 ? "" : "s"} still to rate
+          </span>
+        )}
+      </div>
+      <ul className="mt-2 flex flex-col gap-1">
+        {runs.map((r) => {
+          const active = r.id === currentId;
+          return (
+            <li key={r.id}>
+              <Link
+                href={`/crew?run=${r.id}`}
+                className={
+                  "flex flex-wrap items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors " +
+                  (active
+                    ? "bg-neutral-100 dark:bg-neutral-900"
+                    : "hover:bg-neutral-50 dark:hover:bg-neutral-900/60")
+                }
+              >
+                <span className="text-xs tabular-nums text-neutral-400">
+                  {r.createdAt.slice(0, 10)}
+                </span>
+                <span
+                  className={
+                    "min-w-0 flex-1 truncate " +
+                    (active
+                      ? "font-medium text-neutral-900 dark:text-neutral-100"
+                      : "text-neutral-600 dark:text-neutral-400")
+                  }
+                >
+                  {r.brainDump || "(empty)"}
+                </span>
+                <span className="text-xs text-neutral-400">
+                  {r.total} card{r.total === 1 ? "" : "s"}
+                </span>
+                {r.unrated > 0 && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+                    {r.unrated} to rate
+                  </span>
+                )}
+                {active && <span className="text-[11px] text-neutral-400">· showing</span>}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
