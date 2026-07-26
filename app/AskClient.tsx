@@ -9,6 +9,9 @@ import type {
   FreshnessBadge,
   SourceTool,
 } from "@/lib/ask/types";
+import { classify } from "@/lib/agent/classify";
+import type { AskMode } from "@/lib/agent/types";
+import WorkRunClient from "./WorkRunClient";
 
 /* ------------------------------------------------------------------ */
 /* Styling maps                                                       */
@@ -50,6 +53,8 @@ export default function AskClient({
   const [error, setError] = useState<string | null>(null);
   const [env, setEnv] = useState<AskEnvelope | null>(null);
   const [asked, setAsked] = useState<string>("");
+  // When set, this request is being run as a work request through the agent.
+  const [workQuestion, setWorkQuestion] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const submit = useCallback(async (q: string) => {
@@ -75,16 +80,38 @@ export default function AskClient({
     }
   }, [loading]);
 
+  // Route a request: a simple question answers as before; a work request runs the
+  // visible agent loop. Classification is a boring, deterministic heuristic; the
+  // caller can force a mode (the "make a brief" / "answer simply" affordances).
+  const route = useCallback(
+    (q: string, forced?: AskMode) => {
+      const text = q.trim();
+      if (!text || loading) return;
+      const mode = forced ?? classify(text);
+      setQuestion(text);
+      setAsked(text);
+      if (mode === "work") {
+        setEnv(null);
+        setError(null);
+        setWorkQuestion(text);
+        return;
+      }
+      setWorkQuestion(null);
+      submit(text);
+    },
+    [loading, submit]
+  );
+
   // Deep-link: when the page is opened with ?ask=… (e.g. a proof question from
-  // onboarding), submit it automatically so the visitor lands on the envelope.
+  // onboarding), run it automatically so the visitor lands on the answer/brief.
   const autoRan = useRef(false);
   useEffect(() => {
     if (autoRan.current) return;
     if (initialQuestion && initialQuestion.trim()) {
       autoRan.current = true;
-      submit(initialQuestion);
+      route(initialQuestion);
     }
-  }, [initialQuestion, submit]);
+  }, [initialQuestion, route]);
 
   return (
     <div className="w-full max-w-3xl">
@@ -92,7 +119,7 @@ export default function AskClient({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          submit(question);
+          route(question);
         }}
         className="flex items-center gap-2"
       >
@@ -115,63 +142,92 @@ export default function AskClient({
         </button>
       </form>
 
-      {/* Suggested questions */}
-      {!env && !loading && (
-        <div className="mt-4">
-          <div className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
-            Try one of these
-          </div>
-          <div className="flex flex-col gap-2">
-            {suggested.map((s) => (
-              <button
-                key={s.question}
-                onClick={() => {
-                  setQuestion(s.question);
-                  submit(s.question);
-                }}
-                className="group flex items-start gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/40 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-blue-500/40 dark:hover:bg-blue-950/20"
-              >
-                <span className="mt-0.5 text-neutral-300 transition-colors group-hover:text-blue-500 dark:text-neutral-600">
-                  →
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium text-neutral-800 dark:text-neutral-100">
-                    {s.question}
-                  </span>
-                  {s.note && (
-                    <span className="mt-0.5 block text-xs text-neutral-400">
-                      {s.beat ? <span className="font-medium text-neutral-400">Beat {s.beat} · </span> : null}
-                      {s.note}
+      {workQuestion ? (
+        /* Work request → the visible agent run, saved to /library. */
+        <WorkRunClient
+          key={workQuestion}
+          question={workQuestion}
+          onReset={() => {
+            setWorkQuestion(null);
+            setQuestion("");
+            setAsked("");
+            inputRef.current?.focus();
+          }}
+          onSimple={() => {
+            const q = workQuestion;
+            setWorkQuestion(null);
+            if (q) submit(q);
+          }}
+        />
+      ) : (
+        <>
+          {/* Suggested questions */}
+          {!env && !loading && (
+            <div className="mt-4">
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
+                Try one of these
+              </div>
+              <div className="flex flex-col gap-2">
+                {suggested.map((s) => (
+                  <button
+                    key={s.question}
+                    onClick={() => route(s.question)}
+                    className="group flex items-start gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/40 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-blue-500/40 dark:hover:bg-blue-950/20"
+                  >
+                    <span className="mt-0.5 text-neutral-300 transition-colors group-hover:text-blue-500 dark:text-neutral-600">
+                      →
                     </span>
-                  )}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-neutral-800 dark:text-neutral-100">
+                        {s.question}
+                      </span>
+                      {s.note && (
+                        <span className="mt-0.5 block text-xs text-neutral-400">
+                          {s.beat ? <span className="font-medium text-neutral-400">Beat {s.beat} · </span> : null}
+                          {s.note}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="mt-6 animate-pulse rounded-2xl border border-neutral-200 p-6 dark:border-neutral-800">
-          <div className="mb-3 h-3 w-24 rounded bg-neutral-200 dark:bg-neutral-800" />
-          <div className="mb-2 h-5 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
-          <div className="h-5 w-1/2 rounded bg-neutral-200 dark:bg-neutral-800" />
-        </div>
-      )}
+          {/* Loading skeleton */}
+          {loading && (
+            <div className="mt-6 animate-pulse rounded-2xl border border-neutral-200 p-6 dark:border-neutral-800">
+              <div className="mb-3 h-3 w-24 rounded bg-neutral-200 dark:bg-neutral-800" />
+              <div className="mb-2 h-5 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
+              <div className="h-5 w-1/2 rounded bg-neutral-200 dark:bg-neutral-800" />
+            </div>
+          )}
 
-      {/* Error */}
-      {error && !loading && (
-        <div className="mt-6 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
-          {error}
-        </div>
-      )}
+          {/* Error */}
+          {error && !loading && (
+            <div className="mt-6 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
+              {error}
+            </div>
+          )}
 
-      {/* Answer envelope */}
-      {env && !loading && (
-        <div className="mt-6">
-          <Envelope env={env} asked={asked} onReask={() => submit(asked)} />
-        </div>
+          {/* Answer envelope */}
+          {env && !loading && (
+            <div className="mt-6">
+              <Envelope env={env} asked={asked} onReask={() => submit(asked)} />
+              {env.answerable && (
+                <div className="mt-3 flex items-center gap-2 text-sm">
+                  <span className="text-neutral-400">Need more than an answer?</span>
+                  <button
+                    onClick={() => route(asked, "work")}
+                    className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                  >
+                    Turn this into a work brief →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

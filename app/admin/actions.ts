@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { setConnected } from "@/lib/ask/sources";
 import { resetDemo } from "@/lib/reset";
+import { clearAgentSessions } from "@/lib/agent/library";
 import { ALL_TOOLS, type SourceTool } from "@/lib/ask/types";
 
 /**
@@ -38,5 +39,17 @@ export async function resetDemoAction(): Promise<{ cleared: string[] }> {
   revalidatePath("/facts");
   revalidatePath("/conflicts");
   revalidatePath("/decisions");
+  return result;
+}
+
+/**
+ * Delete every agent run log (sessions + steps). Proves standing rule #5: the
+ * engine holds no durable knowledge. Facts, declarations, conflicts, and the
+ * delivered work products in the Library are all untouched — only the disposable
+ * run state disappears. Returns how many sessions were removed.
+ */
+export async function clearAgentSessionsAction(): Promise<{ sessions: number }> {
+  const result = await clearAgentSessions();
+  revalidatePath("/admin");
   return result;
 }

@@ -4,6 +4,7 @@ import AdminClient from "./AdminClient";
 import ConflictYield from "./ConflictYield";
 import SourceToggles from "./SourceToggles";
 import ResetDemo from "./ResetDemo";
+import AgentSessions from "./AgentSessions";
 import { loadConnections } from "@/lib/ask/sources";
 import { cacheStats } from "@/lib/ask/ask";
 import { ALL_TOOLS, type SourceTool } from "@/lib/ask/types";
@@ -43,10 +44,21 @@ async function loadSummary(): Promise<{
   }
 }
 
+async function loadSessionCount(): Promise<number | null> {
+  try {
+    const { rows } = await query<{ n: string }>(`select count(*)::text as n from agent_sessions`);
+    return Number(rows[0].n);
+  } catch {
+    // agent_sessions (migration 0012) not applied yet.
+    return null;
+  }
+}
+
 export default async function AdminPage() {
   const summary = await loadSummary();
   const conns = await loadConnState();
   const cache = await cacheStats();
+  const sessionCount = await loadSessionCount();
 
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-4 py-8 sm:px-6">
@@ -118,6 +130,9 @@ export default async function AdminPage() {
           </p>
         )}
       </section>
+
+      {/* Disposable agent run state (standing rule #5). */}
+      <AgentSessions sessionCount={sessionCount} />
 
       {/* Reset the demo so onboarding is repeatable. */}
       <ResetDemo />

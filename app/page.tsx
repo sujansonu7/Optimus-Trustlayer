@@ -103,6 +103,7 @@ export default async function Home({
           ["/facts", "Facts"],
           ["/conflicts", "Conflicts"],
           ["/decisions", "Decisions"],
+          ["/library", "Library"],
           ["/settings", "Settings"],
         ].map(([href, label]) => (
           <Link key={href} href={href} className="text-blue-700 hover:underline dark:text-blue-400">
