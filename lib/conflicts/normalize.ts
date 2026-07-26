@@ -104,18 +104,6 @@ export function normName(v: string): string | null {
   return s || null;
 }
 
-/** True when a fact's supporting quote is an email address-header line
- *  ("To:", "From:", "Cc:", "Bcc:"). A name lifted from a header is a
- *  correspondent — who sent or received the message — NOT a records assertion
- *  about a field. Extractors sometimes mistake the recipient of a handoff email
- *  for the account owner (e.g. "To: Priya Nair" — the customer's own contact —
- *  read as Prairie Point's owner). Owner claims must come from the message BODY
- *  ("Thornbury & Cole is yours effective now"), not the address block, so we
- *  treat a header-sourced owner value as non-comparable. */
-export function isAddressHeaderQuote(quote: string | null | undefined): boolean {
-  return !!quote && /^\s*(to|from|cc|bcc)\s*:/i.test(quote);
-}
-
 /** Canonicalize a raw value for a given canonical attribute. Returns null when
  *  the value doesn't belong to that attribute's value space (non-comparable). */
 export function normalizeValue(attr: CanonicalAttribute, raw: string): string | null {

@@ -19,7 +19,6 @@ import {
   makeResolver,
   normalizeValue,
   displayValue,
-  isAddressHeaderQuote,
   ATTR_LABEL,
   type CanonicalAttribute,
 } from "./normalize";
@@ -39,7 +38,6 @@ type RawFact = {
   source_tool: SourceTool;
   source_doc: string;
   doc_timestamp: string | null;
-  source_quote: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -175,7 +173,7 @@ export async function detectConflicts(
   const { rows } = await query<RawFact>(
     // Cast the timestamp to a stable ISO string here — the pg driver otherwise
     // hands back a JS Date, and everything downstream expects a string.
-    `select entity_ref, attribute, value, source_tool, source_doc, source_quote,
+    `select entity_ref, attribute, value, source_tool, source_doc,
             to_char(doc_timestamp at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as doc_timestamp
        from facts
       where superseded_at is null`
@@ -198,6 +196,34 @@ export async function detectConflicts(
   }
   const resolve = makeResolver(canonicalKeys);
 
+  const keyFor = (raw: string): string => {
+    const rk = entityKey(raw);
+    return splitKeys.has(rk) ? rk : resolve(rk);
+  };
+
+  // Per entity, the canonical owner values a STRUCTURED source (CRM / Renewals
+  // Sheet) asserts. Owner is an explicit field in those sources; an "owner"
+  // pulled from free-text email/calls is noisy — the extractor may grab a
+  // recipient, the vendor's own name, or a passing mention. So an email/call
+  // owner value is trusted ONLY when it CORROBORATES a structured value.
+  // Unanchored ones are extraction noise, dropped below — this is what keeps the
+  // false positives out (e.g. Prairie Point) while preserving real corroborated
+  // conflicts (e.g. an email confirming the Sheet's reassigned owner).
+  const structuredOwners = new Map<string, Set<string>>();
+  for (const r of rows) {
+    if (r.source_tool !== "crm" && r.source_tool !== "spreadsheet") continue;
+    if (canonicalAttribute(r.attribute) !== "owner") continue;
+    const cv = normalizeValue("owner", r.value);
+    if (!cv) continue;
+    const ek = keyFor(r.entity_ref);
+    let set = structuredOwners.get(ek);
+    if (!set) {
+      set = new Set<string>();
+      structuredOwners.set(ek, set);
+    }
+    set.add(cv);
+  }
+
   // Bucket facts by (entity, canonical attribute, canonical value).
   type Bucket = {
     entityKey: string;
@@ -210,11 +236,6 @@ export async function detectConflicts(
   for (const r of rows) {
     const attr = canonicalAttribute(r.attribute);
     if (!attr) continue;
-    // An owner name pulled from an email address header (To:/From:/Cc:) is a
-    // correspondent, not an ownership assertion — drop it so a handoff email's
-    // recipient (a customer contact) can't masquerade as the account owner. The
-    // real signal lives in the message body and still counts.
-    if (attr === "owner" && isAddressHeaderQuote(r.source_quote)) continue;
     const canonical = normalizeValue(attr, r.value);
     if (canonical === null || canonical === "") continue; // non-comparable → ignore
 
@@ -222,6 +243,19 @@ export async function detectConflicts(
     // stands on its own key, so its facts no longer join the account.
     const rawKey = entityKey(r.entity_ref);
     const ek = splitKeys.has(rawKey) ? rawKey : resolve(rawKey);
+
+    // Anchoring: an owner value seen only in free-text email/calls must
+    // corroborate a structured (CRM/Sheet) owner value for this account, or it
+    // is dropped as extraction noise (a recipient, the vendor name, a passing
+    // mention) rather than allowed to raise a false ownership conflict.
+    if (
+      (r.source_tool === "email" || r.source_tool === "calls") &&
+      attr === "owner" &&
+      !structuredOwners.get(ek)?.has(canonical)
+    ) {
+      continue;
+    }
+
     const bkey = `${ek}::${attr}`;
     let b = buckets.get(bkey);
     if (!b) {
