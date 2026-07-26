@@ -52,6 +52,25 @@ export function ClaimRow({ claim, byId }: { claim: BriefClaim; byId: Map<number,
   );
 }
 
+/* A bare row of source chips for a set of evidence ids — used under a computed
+ * chart so every number keeps its receipts. Same click-to-see-the-passage UX. */
+export function EvidenceChips({ ids, byId }: { ids: number[]; byId: Map<number, EvidenceItem> }) {
+  const [openId, setOpenId] = useState<number | null>(null);
+  const items = ids.map((id) => byId.get(id)).filter(Boolean) as EvidenceItem[];
+  const open = openId != null ? byId.get(openId) ?? null : null;
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-1">
+        {items.map((e) => (
+          <SourceChip key={e.id} e={e} active={openId === e.id} onClick={() => setOpenId(openId === e.id ? null : e.id)} />
+        ))}
+      </div>
+      {open && <PassagePanel e={open} />}
+    </div>
+  );
+}
+
 function SourceChip({ e, active, onClick }: { e: EvidenceItem; active: boolean; onClick: () => void }) {
   const st = TOOL_STYLE[e.sourceTool];
   return (

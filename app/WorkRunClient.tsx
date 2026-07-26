@@ -235,6 +235,26 @@ function StepRow({ step }: { step: AgentStep }) {
               {input}
             </pre>
           )}
+
+          {/* execute_python streams its output + charts straight into the timeline */}
+          {step.stdout && step.stdout.trim() && (
+            <pre className="mt-1.5 max-h-48 overflow-auto rounded-md border border-neutral-800 bg-neutral-950 px-2.5 py-1.5 font-mono text-[11px] leading-relaxed text-emerald-200">
+              {step.stdout.trim()}
+            </pre>
+          )}
+          {step.charts && step.charts.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {step.charts.map((ch, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={i}
+                  src={`data:${ch.mime};base64,${ch.base64}`}
+                  alt={`chart ${i + 1}`}
+                  className="max-w-full rounded-md border border-neutral-200 bg-white dark:border-neutral-800"
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </li>
@@ -244,6 +264,11 @@ function StepRow({ step }: { step: AgentStep }) {
 function formatInput(input: unknown): string {
   try {
     const obj = input as Record<string, unknown>;
+    // execute_python: show the actual Python, not JSON-escaped source.
+    if (obj && typeof obj.code === "string") {
+      const label = typeof obj.label === "string" && obj.label ? `# ${obj.label}\n` : "";
+      return label + obj.code;
+    }
     // Compact one-key inputs; pretty-print the draft.
     return JSON.stringify(obj, null, 2);
   } catch {

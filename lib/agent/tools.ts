@@ -1,8 +1,8 @@
 // Server-only: the agent's toolset and the session-local evidence pool.
 //
-// FOUR TOOLS, all READ-ONLY over knowledge (they never write a fact, declaration,
-// or conflict — the agent cannot change what TrustLayer knows, only read it and
-// draft from it):
+// FIVE TOOLS, none of which write knowledge (the agent can never change a fact,
+// declaration, or conflict — only read the graph, compute over a snapshot of it,
+// and draft from it):
 //
 //   * query_graph          — the workhorse. Wraps the Ask retrieval so a sub-query
 //                            returns the SAME envelope: arbitrated current values,
@@ -11,6 +11,11 @@
 //   * read_source_passage  — read the raw text of one email/transcript to ground
 //                            exact wording. Context only; not a new citation.
 //   * list_conflicts       — discovery: which accounts have disagreements right now.
+//   * execute_python       — COMPUTE. Runs Python in an isolated sandbox (see
+//                            runner/) against a typed JSON export of the graph
+//                            (see graph.ts) — never a DB handle. Streams stdout +
+//                            charts back; the export's evidence is merged so every
+//                            computed number stays citable.
 //   * draft_document       — TERMINAL. Assemble the brief. Every claim must cite
 //                            evidence ids the run actually pulled; uncited claims
 //                            and dangling ids are dropped in code (same discipline
@@ -25,6 +30,8 @@ import path from "node:path";
 import { retrieve } from "@/lib/ask/retrieve";
 import { detectConflicts } from "@/lib/conflicts/detect";
 import { SOURCE_SHORT } from "@/lib/ask/types";
+import { getRunner } from "./runner";
+import { buildGraphExport, type GraphExportResult } from "./graph";
 import type {
   EvidenceItem,
   ConflictBlock,
@@ -32,6 +39,8 @@ import type {
   SourceTool,
   WorkProduct,
   BriefSection,
+  Computation,
+  ChartImage,
 } from "./types";
 
 const FIXTURE_DIR = path.join(process.cwd(), "fixture");
@@ -54,9 +63,30 @@ export class Session {
   private freshness = new Map<SourceTool, FreshnessBadge>();
   private declarations = new Map<string, { statement: string; scope: string | null; status: string }>();
 
+  // Compute layer: the code runs the agent did, and a one-per-run cache of the
+  // typed graph export the sandbox runs against (building it reads the ledger).
+  private computationsList: Computation[] = [];
+  private graphCache: GraphExportResult | null = null;
+
   constructor(connected: SourceTool[], disconnected: SourceTool[]) {
     this.connected = connected;
     this.disconnected = disconnected;
+  }
+
+  addComputation(c: Computation): void {
+    this.computationsList.push(c);
+  }
+
+  computations(): Computation[] {
+    return this.computationsList.slice();
+  }
+
+  /** Build the typed graph export once, then reuse it across execute_python
+   *  calls in the same run (each call already merged its evidence into the
+   *  pool, so re-merging is idempotent but wasteful). */
+  async graphExport(): Promise<GraphExportResult> {
+    if (!this.graphCache) this.graphCache = await buildGraphExport(this);
+    return this.graphCache;
   }
 
   /** Merge one retrieved evidence item, returning its stable session id. */
@@ -178,6 +208,27 @@ export const AGENT_TOOLS = [
     },
   },
   {
+    name: "execute_python",
+    description:
+      "Run Python in an isolated sandbox to COMPUTE over the graph — sums, group-bys, filters, and charts (matplotlib). A typed JSON export of the knowledge graph is already written to the file 'graph.json' in the working directory: load it with `import json; g = json.load(open('graph.json'))`. It has `accounts` and `deals`; every account field and deal carries an `evidence_id`, and `arr` is a USD number, `renewal_date`/`close_date` are 'YYYY-MM-DD'. Use `snapshot_date` as 'today' for windows like 'next quarter'. Print your results (the numbers you'll cite) AND print the evidence_id behind each number. Draw at most a couple of matplotlib figures with `import matplotlib.pyplot as plt` then `plt.show()` — each figure is auto-captured and attached to the work product. Do NOT call matplotlib.use()/set a backend (that suppresses capture). The sandbox has NO database or network access — only this JSON. Call this before draft_document; then cite the evidence_ids the numbers came from.",
+    input_schema: {
+      type: "object" as const,
+      additionalProperties: false,
+      properties: {
+        label: {
+          type: "string",
+          description: "A short label for this computation, e.g. 'Pipeline by stage' or 'Northwind revenue chart'.",
+        },
+        code: {
+          type: "string",
+          description:
+            "The Python to run. Load graph.json, compute, print results and the evidence_id behind each number, and draw any charts with matplotlib (call plt.show() or leave the figure as the last expression).",
+        },
+      },
+      required: ["code"],
+    },
+  },
+  {
     name: "draft_document",
     description:
       "FINISH the task by assembling the work product. Provide a FLAT list of claims — each claim has a section label, its text, and the evidence id(s) from query_graph that support it. Claims are grouped into sections by their label. EVERY claim must cite at least one evidence id — a claim with no citation is dropped. Add plain-English risk flags for anything uncertain or conflicting. Call this exactly once, at the end, with the COMPLETE brief filled in — never an empty or placeholder draft.",
@@ -233,6 +284,10 @@ export type ToolOutcome = {
   modelResult: string;
   /** One-line human summary streamed to the screen. */
   summary: string;
+  /** For execute_python — what the code printed and the charts it drew, shown
+   *  live in the step timeline. */
+  stdout?: string;
+  charts?: ChartImage[];
   /** Present only for draft_document — the assembled work product ends the run. */
   workProduct?: WorkProduct;
 };
@@ -251,6 +306,8 @@ export async function executeTool(
       return readSourcePassage(input);
     case "list_conflicts":
       return listConflicts(input);
+    case "execute_python":
+      return executePython(input, ctx);
     case "draft_document":
       return draftDocument(input, ctx, request, generatedAt);
     default:
@@ -405,6 +462,110 @@ async function listConflicts(input: Record<string, unknown>): Promise<ToolOutcom
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* execute_python — compute over the typed graph export in a sandbox   */
+/* ------------------------------------------------------------------ */
+
+// Which evidence ids does this code actually touch? We parse the integers the
+// author references (evidence ids they printed / cited in the code) and keep the
+// ones that are real — so the work product shows the exact sources behind the
+// numbers, not the whole book.
+function referencedEvidenceIds(code: string, stdout: string, ctx: Session): number[] {
+  const found = new Set<number>();
+  // Look for "evidence_id" mentions and bare ids in stdout the author printed.
+  const hay = `${code}\n${stdout}`;
+  for (const m of Array.from(hay.matchAll(/evidence[_\s-]?id[^0-9]{0,8}(\d{1,4})/gi))) {
+    const n = Number(m[1]);
+    if (ctx.hasEvidenceId(n)) found.add(n);
+  }
+  return Array.from(found).sort((a, b) => a - b);
+}
+
+async function executePython(input: Record<string, unknown>, ctx: Session): Promise<ToolOutcome> {
+  const code = String(input.code ?? "").trim();
+  const label = String(input.label ?? "").trim() || "Computation";
+  if (!code) {
+    return { modelResult: "Provide non-empty Python code.", summary: "execute_python: empty code" };
+  }
+
+  const runner = getRunner();
+  if (!runner) {
+    return {
+      modelResult:
+        "The compute sandbox is not configured (no E2B_API_KEY). Answer from query_graph facts alone, without computed charts.",
+      summary: "execute_python: no sandbox configured",
+    };
+  }
+
+  // Build (once) the typed JSON export the sandbox computes against, and merge
+  // its evidence into the run so the numbers are citable. Never a DB handle —
+  // only this arbitrated data crosses into the sandbox.
+  let graphResult: GraphExportResult;
+  try {
+    graphResult = await ctx.graphExport();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { modelResult: `Could not build the graph export: ${msg}`, summary: `execute_python: graph export failed` };
+  }
+
+  const files = [{ path: "graph.json", content: JSON.stringify(graphResult.graph) }];
+
+  let result;
+  try {
+    result = await runner.run(code, { files, timeoutMs: 45_000 });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return {
+      modelResult: `The sandbox failed to run (${msg}). You can retry once, or proceed without the chart.`,
+      summary: `execute_python: sandbox error`,
+    };
+  }
+
+  const charts: ChartImage[] = result.artifacts.map((a) => ({ mime: a.mime, base64: a.base64 }));
+  const evidenceIds = referencedEvidenceIds(code, result.stdout, ctx);
+
+  // Record the computation on the work product (code + output + charts + the
+  // sources behind the numbers). Failed runs are recorded too — an honest brief
+  // shows what was attempted.
+  const computation: Computation = {
+    label,
+    runner: runner.name,
+    code,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    error: result.error,
+    charts,
+    evidenceIds,
+    durationMs: result.durationMs,
+  };
+  ctx.addComputation(computation);
+
+  const secs = (result.durationMs / 1000).toFixed(1);
+  if (result.error) {
+    return {
+      modelResult: `The code raised an error:\n\n${result.error}\n\nstdout so far:\n${truncate(result.stdout, 1500)}\n\nFix the code and call execute_python again.`,
+      summary: `execute_python "${label}" → error after ${secs}s`,
+      stdout: result.stdout,
+      charts,
+    };
+  }
+
+  const chartNote = charts.length ? ` · ${charts.length} chart${charts.length === 1 ? "" : "s"}` : "";
+  const stdoutForModel = result.stdout.trim() || "(the code printed nothing)";
+  return {
+    modelResult:
+      `Ran in the ${runner.name} sandbox (${secs}s)${chartNote}. stdout:\n\n${truncate(stdoutForModel, 4000)}\n\n` +
+      `Now cite the evidence_id behind each number when you draft.`,
+    summary: `execute_python "${label}" → ran in ${secs}s${chartNote}`,
+    stdout: result.stdout,
+    charts,
+  };
+}
+
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max) + "\n…(truncated)" : s;
+}
+
 // Tool inputs arrive as JSON, but models sometimes hand a nested array back as a
 // JSON-ENCODED STRING (e.g. sections: "[{...}]") instead of a real array. Accept
 // both so a well-populated draft is never wrongly rejected as empty.
@@ -493,15 +654,32 @@ function draftDocument(
     };
   }
 
+  // The deliverable shows the computations that SUCCEEDED (code, output, charts,
+  // sources). Failed attempts stay in the live step timeline — honest about the
+  // process — but don't clutter the buyer-facing work product.
+  const computations = ctx.computations().filter((c) => !c.error);
+
+  // Prune the evidence pool to what the deliverable actually cites — claims plus
+  // the sources behind computed numbers. A compute run merges the WHOLE typed
+  // graph export into the pool so the sandbox can see every account; only the
+  // referenced passages belong on the work product (keeps it lean and makes the
+  // "N source passages" footer honest).
   const env = ctx.envelope();
+  const citedIds = new Set<number>();
+  for (const s of sections) for (const c of s.claims) for (const id of c.evidence) citedIds.add(id);
+  for (const c of computations) for (const id of c.evidenceIds) citedIds.add(id);
+  const evidence = env.evidence.filter((e) => citedIds.has(e.id));
+
   const workProduct: WorkProduct = {
     title,
     entity,
     request,
     summary,
     sections,
+    computations,
     risks,
     ...env,
+    evidence,
     generatedAt,
   };
 

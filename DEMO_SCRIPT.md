@@ -317,4 +317,7 @@ parses this block; edit it to change the seeded chips.
 - Who owns the Thornbury & Cole account? | beat:4 | Stale CRM owner vs. the corroborated current owner across the Sheet and email.
 - Is Grantline Media Group still an active customer? | beat:4 | CRM still says Active; the Sheet and the customer's own email say Churned.
 - Is there anything I should know before the Prairie Point renewal? | beat:5 | Cross-source recall: a discount approval buried in email that never reached the CRM or the Sheet.
+- QBR summary for Northwind Freight with a revenue chart | beat:6 | Compute: the agent writes Python, runs it in an isolated sandbox against the graph export, and charts Northwind's revenue — the code, output, and every number's source shown on the work product.
+- Pipeline summary by stage with totals | beat:6 | Compute: open renewal deals grouped by stage, summed, and charted — the totals are calculated in the sandbox, each traceable to its CRM deal row.
+- Renewal calendar for next quarter | beat:6 | Compute: accounts renewing next quarter, by month, using the arbitrated (conflict-resolved) renewal dates — the contested ones flagged.
 <!-- SUGGESTED_QUESTIONS:end -->

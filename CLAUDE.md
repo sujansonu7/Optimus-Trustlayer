@@ -44,6 +44,13 @@ company, it:
   time in `lib/db.ts`; the home page shows a live "Database connected" badge.
 - **Anthropic SDK** (`@anthropic-ai/sdk`) — the agent/LLM layer, keyed by
   `ANTHROPIC_API_KEY`.
+- **E2B** (`@e2b/code-interpreter`) — the compute layer, keyed by `E2B_API_KEY`.
+  The agent's `execute_python` tool writes Python that runs in an **isolated
+  sandbox** against a **typed JSON export of the graph** (`lib/agent/graph.ts`) —
+  never DB credentials. stdout and charts stream into the visible steps and
+  attach to the work product, where the code, output, and every number's source
+  are shown. It sits behind a swappable **`Runner`** interface
+  (`lib/agent/runner/`), so the sandbox can be replaced in one file.
 - Secrets live only in a git-ignored `.env` locally and in Vercel environment
   variables. `.env.example` documents the variable names.
 - Deployed on **Vercel**.

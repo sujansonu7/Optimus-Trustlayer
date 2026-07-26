@@ -103,6 +103,7 @@ export default async function Home({
           ["/facts", "Facts"],
           ["/conflicts", "Conflicts"],
           ["/decisions", "Decisions"],
+          ["/crew", "Crew"],
           ["/library", "Library"],
           ["/settings", "Settings"],
         ].map(([href, label]) => (

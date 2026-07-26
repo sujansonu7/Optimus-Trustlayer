@@ -5,8 +5,11 @@ import ConflictYield from "./ConflictYield";
 import SourceToggles from "./SourceToggles";
 import ResetDemo from "./ResetDemo";
 import AgentSessions from "./AgentSessions";
+import CrewQuality from "./CrewQuality";
 import { loadConnections } from "@/lib/ask/sources";
 import { cacheStats } from "@/lib/ask/ask";
+import { loadParallelEnabled, briefQualityStats } from "@/lib/crew/store";
+import type { BriefQualityStats } from "@/lib/crew/types";
 import { ALL_TOOLS, type SourceTool } from "@/lib/ask/types";
 
 // Always reflect current DB state.
@@ -54,11 +57,22 @@ async function loadSessionCount(): Promise<number | null> {
   }
 }
 
+async function loadCrew(): Promise<{ stats: BriefQualityStats; parallel: boolean } | null> {
+  try {
+    const [stats, parallel] = await Promise.all([briefQualityStats(), loadParallelEnabled()]);
+    return { stats, parallel };
+  } catch {
+    // crew tables (migration 0013) not applied yet.
+    return null;
+  }
+}
+
 export default async function AdminPage() {
   const summary = await loadSummary();
   const conns = await loadConnState();
   const cache = await cacheStats();
   const sessionCount = await loadSessionCount();
+  const crew = await loadCrew();
 
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-4 py-8 sm:px-6">
@@ -82,6 +96,12 @@ export default async function AdminPage() {
             className="text-sm text-blue-700 hover:underline dark:text-blue-400"
           >
             Decision log →
+          </Link>
+          <Link
+            href="/crew"
+            className="text-sm text-blue-700 hover:underline dark:text-blue-400"
+          >
+            Crew →
           </Link>
         </div>
         <p className="mt-1 max-w-2xl text-sm text-neutral-500 dark:text-neutral-400">
@@ -130,6 +150,9 @@ export default async function AdminPage() {
           </p>
         )}
       </section>
+
+      {/* Crew brief-quality instrumentation + the Parallel gate. */}
+      {crew && <CrewQuality stats={crew.stats} parallelEnabled={crew.parallel} />}
 
       {/* Disposable agent run state (standing rule #5). */}
       <AgentSessions sessionCount={sessionCount} />

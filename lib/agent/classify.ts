@@ -24,11 +24,24 @@ const DELIVERABLE =
 const STRONG =
   /\b(prep\s+me|brief\s+me|get\s+me\s+ready|prepare\s+(?:me|for)|put\s+together|draft\s+(?:a|the|me)|write\s+up|talking\s+points)\b/i;
 
+// Artifact-shaped computation signals that are WORK on their own — they ask the
+// agent to CALCULATE and hand back a produced artifact (a chart, a calendar,
+// stage totals), which is exactly what the compute tool is for. Deliberately the
+// STRONG nouns only, so a plain question ("what's Northwind's revenue?") stays
+// simple. Covers the three compute demos:
+//   "QBR summary … with a revenue chart", "pipeline summary by stage with
+//   totals", "renewal calendar for next quarter".
+const COMPUTE =
+  /\b(chart|charts|graph|plot|calendar|qbr|dashboard|breakdown|totals?|by\s+stage|by\s+month|by\s+industry|per\s+stage)\b/i;
+
 export function classify(question: string): AskMode {
   const q = question.trim();
   if (!q) return "simple";
 
   if (STRONG.test(q)) return "work";
+
+  // An artifact-shaped computation request => work.
+  if (COMPUTE.test(q)) return "work";
 
   // A produce-verb plus a deliverable/context noun => work.
   if (PRODUCE_VERBS.test(q) && DELIVERABLE.test(q)) return "work";

@@ -14,11 +14,12 @@ import type {
 
 export type { EvidenceItem, ConflictBlock, FreshnessBadge, SourceTool };
 
-/** The four tools the agent can pick from. */
+/** The tools the agent can pick from. */
 export type AgentToolName =
   | "query_graph"
   | "read_source_passage"
   | "list_conflicts"
+  | "execute_python"
   | "draft_document";
 
 /** One streamed step of visible work. */
@@ -30,6 +31,36 @@ export type AgentStep = {
   toolName?: AgentToolName | null;
   input?: unknown; // tool inputs, shown verbatim on tool_call
   summary: string; // the one-line human-readable summary shown live
+  // For an execute_python tool_result: what the code printed and the charts it
+  // drew, shown inline in the live timeline. Emitted to the browser but NOT
+  // persisted to agent_steps — the durable copy lives on the work product's
+  // computations.
+  stdout?: string;
+  charts?: ChartImage[];
+};
+
+/** A chart image (base64 PNG/JPEG) rendered inline as a data URI. */
+export type ChartImage = {
+  mime: string; // "image/png"
+  base64: string; // raw base64, no data: prefix
+};
+
+/**
+ * One code run the agent did: the Python it wrote, what it printed, any error,
+ * the charts it drew, and the evidence ids whose numbers it computed over. This
+ * is what makes compute auditable — code, output, and every number's source are
+ * all on the work product.
+ */
+export type Computation = {
+  label: string; // short human label, e.g. "Pipeline by stage"
+  runner: string; // which sandbox ran it, e.g. "E2B"
+  code: string; // the exact Python the agent ran
+  stdout: string; // everything it printed
+  stderr: string; // warnings / stderr, if any
+  error: string | null; // a Python traceback, when the run failed
+  charts: ChartImage[]; // figures it produced
+  evidenceIds: number[]; // evidence pool ids backing the numbers it used
+  durationMs: number; // wall-clock of the sandbox run
 };
 
 /** One cited statement inside a brief — same shape as an Ask claim. */
@@ -54,6 +85,7 @@ export type WorkProduct = {
   request: string; // the original request
   summary: string; // 1–2 sentence executive summary
   sections: BriefSection[];
+  computations: Computation[]; // code the agent ran + its output and charts
   risks: string[]; // plain-English flags ("sources disagree on the renewal date")
   // The shared envelope, accumulated across the run:
   evidence: EvidenceItem[]; // the citable pool (session-global ids)

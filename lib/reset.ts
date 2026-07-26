@@ -23,9 +23,11 @@ export async function resetDemo(): Promise<ResetResult> {
 
     // Wipe derived data. One TRUNCATE with CASCADE handles the FK graph
     // (decisions.fact_id -> facts, entity_members -> entities) in any order.
+    // crew_runs cascades to crew_workstreams — the crew ledger is work state, not
+    // knowledge, and any facts a crew brief filed back are wiped with facts above.
     await client.query(
       `truncate table facts, ingested_sources, answer_cache,
-                      entities, entity_members, decisions
+                      entities, entity_members, decisions, crew_runs
        restart identity cascade`
     );
 
@@ -47,6 +49,12 @@ export async function resetDemo(): Promise<ResetResult> {
       `update source_connections set connected = true, updated_at = now()`
     );
 
+    // Reset the crew Parallel toggle to OFF — its safe default until brief
+    // quality is proven again on the fresh demo.
+    await client.query(
+      `update crew_settings set parallel_enabled = false, updated_at = now() where id = true`
+    );
+
     await client.query("commit");
     return {
       cleared: [
@@ -55,6 +63,7 @@ export async function resetDemo(): Promise<ResetResult> {
         "belief cache",
         "resolved entities",
         "decision log",
+        "crew runs",
       ],
     };
   } catch (err) {

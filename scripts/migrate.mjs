@@ -83,7 +83,12 @@ async function main() {
     let ran = 0;
     for (const filename of files) {
       const sql = readFileSync(join(MIGRATIONS_DIR, filename), "utf8");
-      const checksum = createHash("sha256").update(sql).digest("hex");
+      // Hash the LF-NORMALIZED content, not the raw bytes. On Windows checkouts
+      // git's core.autocrlf rewrites LF↔CRLF, which would otherwise change a
+      // migration's byte hash on every checkout and wrongly trip the immutability
+      // guard below. Normalizing makes the checksum stable across line endings and
+      // platforms — the immutability guard still catches real content edits.
+      const checksum = createHash("sha256").update(sql.replace(/\r\n/g, "\n")).digest("hex");
 
       if (applied.has(filename)) {
         if (applied.get(filename) !== checksum) {

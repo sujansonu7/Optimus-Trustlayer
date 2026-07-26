@@ -4,8 +4,8 @@
 // citations. Used both inline right after the agent finishes a run, and on the
 // /library/[id] page. Same citation UX as an Ask answer — click a source chip to
 // see the exact passage, its date, and its content hash.
-import type { WorkProduct } from "@/lib/agent/types";
-import { TOOL_STYLE, ClaimRow, ConflictInline, FreshnessPill } from "./EnvelopeParts";
+import type { WorkProduct, Computation, EvidenceItem } from "@/lib/agent/types";
+import { TOOL_STYLE, ClaimRow, ConflictInline, FreshnessPill, EvidenceChips } from "./EnvelopeParts";
 
 // Format a timestamp deterministically — fixed locale + UTC — so the server and
 // client render the exact same string (a plain toLocaleString() uses each
@@ -105,6 +105,20 @@ export default function WorkProductView({
           </div>
         )}
 
+        {/* Computations: the code the agent ran, its output, and its charts */}
+        {wp.computations && wp.computations.length > 0 && (
+          <div className="mt-6">
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
+              Computed in a sandbox · code, output, and every number’s source
+            </div>
+            <div className="space-y-4">
+              {wp.computations.map((c, i) => (
+                <ComputationCard key={i} c={c} byId={byId} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Conflicts touched by the brief */}
         {wp.conflicts.length > 0 && (
           <div className="mt-6">
@@ -151,10 +165,84 @@ export default function WorkProductView({
         <span>
           · from {wp.connectedTools.length} connected source{wp.connectedTools.length === 1 ? "" : "s"}
         </span>
+        {wp.computations && wp.computations.length > 0 && (
+          <span>· {wp.computations.length} computation{wp.computations.length === 1 ? "" : "s"}</span>
+        )}
         {wp.disconnectedTools.length > 0 && (
           <span className="text-amber-500">· {wp.disconnectedTools.map((t) => TOOL_STYLE[t].short).join(", ")} disconnected</span>
         )}
       </div>
     </article>
+  );
+}
+
+// One computation: the exact Python that ran, what it printed, the charts it
+// drew, and the source passages behind the numbers. This is the audit trail for
+// every computed figure — nothing here is unbacked.
+function ComputationCard({ c, byId }: { c: Computation; byId: Map<number, EvidenceItem> }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800">
+      <div className="flex flex-wrap items-center gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-2 dark:border-neutral-900 dark:bg-neutral-900/50">
+        <span className="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-100 dark:bg-neutral-700">
+          {c.runner}
+        </span>
+        <span className="text-sm font-medium text-neutral-800 dark:text-neutral-100">{c.label}</span>
+        <span className="ml-auto text-[11px] text-neutral-400">ran in {(c.durationMs / 1000).toFixed(1)}s</span>
+      </div>
+
+      <div className="space-y-3 px-4 py-3">
+        {/* Charts */}
+        {c.charts.length > 0 && (
+          <div className="flex flex-wrap gap-3">
+            {c.charts.map((ch, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={`data:${ch.mime};base64,${ch.base64}`}
+                alt={`${c.label} chart ${i + 1}`}
+                className="max-w-full rounded-lg border border-neutral-200 bg-white dark:border-neutral-800"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* The code */}
+        <details className="group">
+          <summary className="cursor-pointer text-[11px] font-medium text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+            Show the Python that ran ▾
+          </summary>
+          <pre className="mt-1.5 max-h-80 overflow-auto rounded-md border border-neutral-200 bg-neutral-50 p-3 font-mono text-[11px] leading-relaxed text-neutral-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300">
+            {c.code}
+          </pre>
+        </details>
+
+        {/* stdout */}
+        {c.stdout.trim() && (
+          <div>
+            <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Output</div>
+            <pre className="max-h-72 overflow-auto rounded-md border border-neutral-200 bg-neutral-950 p-3 font-mono text-[11px] leading-relaxed text-emerald-200 dark:border-neutral-800">
+              {c.stdout.trim()}
+            </pre>
+          </div>
+        )}
+
+        {/* Error, if the run failed */}
+        {c.error && (
+          <pre className="max-h-56 overflow-auto rounded-md border border-red-300 bg-red-50 p-3 font-mono text-[11px] text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300">
+            {c.error}
+          </pre>
+        )}
+
+        {/* Sources behind the numbers */}
+        {c.evidenceIds.length > 0 && (
+          <div>
+            <div className="mb-1 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+              Sources behind these numbers
+            </div>
+            <EvidenceChips ids={c.evidenceIds} byId={byId} />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
