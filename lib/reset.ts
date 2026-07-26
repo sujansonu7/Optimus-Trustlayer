@@ -2,10 +2,11 @@
 // run again — live, in front of an audience — from scratch.
 //
 // This wipes only DERIVED data (everything the build produces): the fact ledger,
-// the per-file ingest cache, the belief cache, the resolved-entity tables, and
-// the decision log. It then restores the two seed declarations and reconnects
-// all four sources, so the app is exactly where migration 0005/0007/0008 leave a
-// fresh install — ready to ingest again.
+// the per-file ingest cache, the belief cache, the resolved-entity tables, the
+// decision log, the crew ledger, and the work-product Library. It then restores
+// the two seed declarations and reconnects all four sources, so the app is
+// exactly where migration 0005/0007/0008 leave a fresh install — ready to
+// ingest again.
 //
 // It NEVER drops tables and NEVER touches the fixture files or the freshness
 // policy. Nothing here is irreversible at the schema level: re-running the build
@@ -25,9 +26,12 @@ export async function resetDemo(): Promise<ResetResult> {
     // (decisions.fact_id -> facts, entity_members -> entities) in any order.
     // crew_runs cascades to crew_workstreams — the crew ledger is work state, not
     // knowledge, and any facts a crew brief filed back are wiped with facts above.
+    // work_products is the Library: delivered briefs are work output, not source
+    // knowledge, so a reset that rebuilds from scratch clears them too (otherwise
+    // stale briefs from prior runs linger across a reset).
     await client.query(
       `truncate table facts, ingested_sources, answer_cache,
-                      entities, entity_members, decisions, crew_runs
+                      entities, entity_members, decisions, crew_runs, work_products
        restart identity cascade`
     );
 
@@ -64,6 +68,7 @@ export async function resetDemo(): Promise<ResetResult> {
         "resolved entities",
         "decision log",
         "crew runs",
+        "work product library",
       ],
     };
   } catch (err) {

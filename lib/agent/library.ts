@@ -171,3 +171,23 @@ export async function clearAgentSessions(): Promise<{ sessions: number; skipped:
   const { rowCount } = await query(`delete from agent_sessions where status <> 'running'`);
   return { sessions: rowCount ?? 0, skipped };
 }
+
+/** How many work products are in the Library right now (for the /admin count). */
+export async function countWorkProducts(): Promise<number> {
+  const { rows } = await query<{ n: string }>(`select count(*)::text as n from work_products`);
+  return Number(rows[0]?.n ?? 0);
+}
+
+/**
+ * Empty the Library — delete every delivered work product. This removes the
+ * saved BRIEFS (the formatted deliverables), nothing else: the fact ledger,
+ * declarations, conflicts, and the facts a brief filed back into the graph all
+ * survive (a filed-back fact is knowledge in its own right, keyed by content
+ * hash — it does not point at the work product). Any crew card that linked to a
+ * cleared product keeps its row; its work_product_id is set null by the FK.
+ * Returns how many products were removed.
+ */
+export async function clearWorkProducts(): Promise<{ products: number }> {
+  const { rowCount } = await query(`delete from work_products`);
+  return { products: rowCount ?? 0 };
+}

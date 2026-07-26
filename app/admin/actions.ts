@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { setConnected } from "@/lib/ask/sources";
 import { resetDemo } from "@/lib/reset";
-import { clearAgentSessions } from "@/lib/agent/library";
+import { clearAgentSessions, clearWorkProducts } from "@/lib/agent/library";
 import { ALL_TOOLS, type SourceTool } from "@/lib/ask/types";
 
 /**
@@ -53,5 +53,18 @@ export async function resetDemoAction(): Promise<{ cleared: string[] }> {
 export async function clearAgentSessionsAction(): Promise<{ sessions: number; skipped: number }> {
   const result = await clearAgentSessions();
   revalidatePath("/admin");
+  return result;
+}
+
+/**
+ * Empty the Library — delete every delivered work product (the saved briefs).
+ * Knowledge is untouched: the fact ledger, declarations, conflicts, and any
+ * facts a brief filed back into the graph all survive. Returns how many products
+ * were removed. Use it to tidy leftover briefs from prior test/demo runs.
+ */
+export async function clearLibraryAction(): Promise<{ products: number }> {
+  const result = await clearWorkProducts();
+  revalidatePath("/admin");
+  revalidatePath("/library");
   return result;
 }

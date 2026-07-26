@@ -5,7 +5,9 @@ import ConflictYield from "./ConflictYield";
 import SourceToggles from "./SourceToggles";
 import ResetDemo from "./ResetDemo";
 import AgentSessions from "./AgentSessions";
+import ClearLibrary from "./ClearLibrary";
 import CrewQuality from "./CrewQuality";
+import { countWorkProducts } from "@/lib/agent/library";
 import { loadConnections } from "@/lib/ask/sources";
 import { cacheStats } from "@/lib/ask/ask";
 import { loadParallelEnabled, briefQualityStats } from "@/lib/crew/store";
@@ -57,6 +59,15 @@ async function loadSessionCount(): Promise<number | null> {
   }
 }
 
+async function loadLibraryCount(): Promise<number | null> {
+  try {
+    return await countWorkProducts();
+  } catch {
+    // work_products (migration 0012) not applied yet.
+    return null;
+  }
+}
+
 async function loadCrew(): Promise<{ stats: BriefQualityStats; parallel: boolean } | null> {
   try {
     const [stats, parallel] = await Promise.all([briefQualityStats(), loadParallelEnabled()]);
@@ -72,6 +83,7 @@ export default async function AdminPage() {
   const conns = await loadConnState();
   const cache = await cacheStats();
   const sessionCount = await loadSessionCount();
+  const libraryCount = await loadLibraryCount();
   const crew = await loadCrew();
 
   return (
@@ -156,6 +168,9 @@ export default async function AdminPage() {
 
       {/* Disposable agent run state (standing rule #5). */}
       <AgentSessions sessionCount={sessionCount} />
+
+      {/* The Library of delivered work products. */}
+      <ClearLibrary count={libraryCount} />
 
       {/* Reset the demo so onboarding is repeatable. */}
       <ResetDemo />
