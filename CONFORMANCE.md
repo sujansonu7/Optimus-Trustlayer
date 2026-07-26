@@ -480,7 +480,7 @@ uncited model prose, rendered at the *top* of the brief (`WorkProductView.tsx:62
 *Minor:* `classify()` over-triggers on the bare word `total` (`classify.ts:34-35`), so
 *"what is the total ARR for Silverline?"* spins up a full agent run instead of answering simply.
 
-### Milestone 10 — E2B sandbox · **CONFORMS (5/7), 2 PARTIAL**
+### Milestone 10 — E2B sandbox · **CONFORMS (6/7), 1 PARTIAL**
 A real `Runner` interface (`runner/types.ts:59-64`) with a single selection point
 (`runner/index.ts:17-21`) — swapping backends is a one-file change. Fresh sandbox per run,
 unconditional `finally { sandbox.kill() }` (`e2b.ts:68-71`).
@@ -491,11 +491,15 @@ unconditional `finally { sandbox.kill() }` (`e2b.ts:68-71`).
 never appear on the runner path. The export is connected-source-filtered at the SQL boundary
 (`graph.ts:157-166`). All three demo tasks are seeded as chips.
 
-**PARTIAL 1 — stdout/plots do not stream incrementally.** `onStdout`/`onStderr` exist and E2B
-wires them (`e2b.ts:46-47`), but the call site never passes them (`tools.ts:515`). Everything
-arrives on one `tool_result` step after up to 45 s of on-screen silence.
+**FIXED (was PARTIAL 1) — stdout now streams incrementally.** The call site passes `onStdout`/
+`onStderr` (`tools.ts:571-576`) into the runner E2B already wired (`e2b.ts:46-47`). The loop claims
+the `tool_result` seq before running the tool (`loop.ts:160`), so partial output streams into the
+row the finished result replaces in place; both step consumers update on a repeated seq rather than
+dropping it. Progress frames are browser-only and never reach `recordStep`. Verified live: a
+slow-printing script surfaced at 1.5s/3.5s/…/11.5s across an 11.5s run. *Charts still arrive only
+at the end* — E2B returns figures in `execution.results` after the cell completes, not as a stream.
 
-**PARTIAL 2 — "every number's source" is a regex heuristic.** `referencedEvidenceIds()`
+**PARTIAL — "every number's source" is a regex heuristic.** `referencedEvidenceIds()`
 (`tools.ts:473-482`) scrapes code and stdout for `evidence_id` mentions. If the model computes a
 total but forgets to print the backing id, the card shows *no* sources and nothing flags it.
 
