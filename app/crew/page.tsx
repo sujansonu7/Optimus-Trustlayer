@@ -19,7 +19,7 @@ export default async function CrewPage() {
   let stats: BriefQualityStats = { rated: 0, noCorrection: 0, correction: 0, pct: null };
   // Persisted step logs, keyed by WORKSTREAM id, so each card's timeline survives
   // a page reload (the live SSE steps are gone after a refresh).
-  let initialSteps: Record<string, AgentStep[]> = {};
+  const initialSteps: Record<string, AgentStep[]> = {};
   let migrated = true;
   if (dbConnected) {
     try {

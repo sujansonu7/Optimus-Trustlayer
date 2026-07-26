@@ -194,6 +194,7 @@ export default function CrewClient({
     setSteps((p) => ({ ...p, [wsId]: [] }));
     setLiveError((p) => ({ ...p, [wsId]: null }));
     setProducts((p) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [wsId]: _drop, ...rest } = p;
       return rest;
     });
