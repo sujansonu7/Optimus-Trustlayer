@@ -695,6 +695,89 @@ piece of Milestone 5 work (alongside `/entities` and `/review`, which remain mis
 
 `npx tsc --noEmit` passes; `npx next lint` reports nothing in the new files.
 
+### Fix #3 — the production build (pre-existing breakage)
+
+Two ESLint errors in `app/crew/` failed `next build`, so **no deploy could
+succeed**. `tsc` passed and `npm run dev` worked, which is why it went unnoticed.
+Confirmed pre-existing by linting a clean `HEAD`. Fixed without restructuring the
+surrounding code. `npm run build` now succeeds.
+
+### Fix #4 — crew reliability (findings #4, #5)
+
+Three failure modes that silently destroyed work and suppressed Gate W-B:
+
+- `updateWorkstream` wrote `session_id`/`work_product_id` **after** the agent run,
+  so clearing sessions in that window raised an FK violation — the race already
+  hardened for `agent_steps`. Both ids are now adopted only if the row still
+  exists.
+- That exception escaped `Promise.all`, skipping `setRunStatus` and stranding
+  every remaining card in `queued` while the run still looked alive. `dispatchOne`
+  is now wrapped per card.
+- A card stuck in `running` was **recoverable only by hand-editing the database**.
+  Cards now carry `updatedAt`; `isStuckRunning()` treats `running` with no write
+  for 6 minutes as a dead dispatch, Retry accepts those, and the card explains
+  itself. A card being actively streamed is never flagged.
+
+### Fix #5 — crew run history (finding #6)
+
+`/crew` loaded only the newest run, so a new brain-dump made every un-rated card
+from the previous one unreachable — and each is a rating Gate W-B never counts.
+`/crew?run=<id>` opens earlier boards, with an amber count of briefs still to rate.
+
+### Fix #6 — three claims presented as sourced (findings #9, #7, #11)
+
+- **Risk flags** were uncited prose at the top of every brief. They now carry
+  evidence ids, render source chips, and survive the evidence prune; an ungrounded
+  flag is labelled *"the agent's own judgement, not tied to a source"*. The legacy
+  bare-string shape still renders.
+- **The executive summary** is labelled as synthesis of the cited findings below,
+  which makes "every claim is cited" literally true.
+- **Onboarding connectors** showed "Connected" as component state only and never
+  wrote `source_connections` — so a revoked source read as connected while Ask
+  refused it. Connecting now actually reconnects.
+- **`/conflicts` severity** was hardcoded while claiming to be "aligned with the
+  freshness_table seeds". It now reads `freshness_table` (most severe tier wins),
+  falling back to the literals only when a row is missing. Migration `0014` seeds
+  rows for ARR, account status and tier — the three attributes `0005` never
+  covered — using the previously hardcoded values. **Verified:** board unchanged
+  after migration; flipping the ARR tier to critical moved Quantum Peak to
+  Critical and re-sorted the board; restored.
+
+### Fix #7 — four small ones (findings #14, #15, #16, #18)
+
+`classify()` no longer treats the bare word "total" as a work request. Reset copy
+now admits it destroys crew runs and the Library. Re-ingest links each superseded
+fact to its replacement via `superseded_by`. The `planted #N` chips and filter now
+require `?qa=1`, and the tag is stripped server-side otherwise — **verified: zero
+answer-key values in the default payload, 8 with `?qa=1`**.
+
+### Fix #8 — `/entities` and `/review` (finding #8)
+
+Both routes the guide names existed only as 404s.
+
+**`/entities`** — one card per resolved identity: canonical name, every spelling
+each tool uses, fact counts, source chips, and a plain-English *why* per member.
+Recomputed from the ledger on every load with the same resolver the retriever and
+detector use; the `entities` table stays unwritten.
+
+**`/review`** — the borderline queue. The resolver's conservatism is what keeps
+precision at 1.00 and what leaves real aliases unlinked, so the queue surfaces
+exactly those, scored by explainable signals (shared tokens, initialisms,
+run-together domain spellings, hyphenated suffixes) and shown with the case for
+*and* against. **Scoring only ranks — nothing auto-merges.** Approve-merge /
+Keep-separate persist in `resolution_reviews` (migration `0015`), survive
+re-ingest, and become `mergeKeys` honoured by every resolution path, with a human
+split still beating a human merge. Approving invalidates every cached belief, for
+the same reason reverting a merge does.
+
+Approved merges deliberately **do not** move the Gate-1 scoreboard, which grades
+the resolver's *automatic* decisions — the page says so.
+
+**Verified live:** Silverline's four names resolved into one with per-member
+reasoning (62 entities, 11 multi-name); the queue surfaced two genuine fixture
+aliases; approving one persisted and appeared on `/entities` as *"You approved
+this merge on /review"*, with Gate 1 correctly unmoved. Test verdict cleared.
+
 ---
 
 ## 8. Pre-existing issue found while verifying (not introduced by any fix here)
@@ -711,5 +794,44 @@ changes and linting clean `HEAD`:
 
 Next.js runs ESLint as part of `next build` and treats these as errors, so the production build
 aborts. `npx tsc --noEmit` passes and `npm run dev` is unaffected, which is why this went unnoticed
-— but **a Vercel deploy would fail**. Both are one-line fixes in files untouched by this audit;
-left alone here rather than folded into an unrelated commit.
+— but **a Vercel deploy would fail**. *(Fixed — see Fix #3.)*
+
+---
+
+## 9. The one item deliberately NOT done
+
+**Finding #12 — `fixture/billing_line_items.csv`, `fixture/slack/` and
+`fixture/notion/` are still never ingested.** These carry planted item #6, the
+non-person-entity naming drift (Meridian Pulse / Project Fathom / SKU-10045-ENT).
+
+I stopped short of this one on purpose. Slack and Notion are not values of the
+`source_tool` enum, so ingesting them is not "add two files to a job list" — it
+means a new enum value plus every surface keyed on it: source labels, tool chips,
+the connection toggles, the freshness table, the `/sources` tabs, the graph export,
+and the Gate-2 connected-source filtering just added. That is a wide change across
+working, demo-green code, and the standing rule is not to refactor working code.
+
+It is also the only remaining item that could move the conflict-yield counter off
+green, since new facts can create new cross-source disagreements.
+
+**Recommendation:** treat it as its own scoped piece of work — "add Slack and
+Notion as first-class sources" — rather than a fix. Until then, planted item #6
+remains ungraded, which the `/admin` yield caption already states.
+
+---
+
+## 10. Where the gates stand now
+
+| Gate | At audit | Now |
+|---|---|---|
+| 0 — live + real DB badge | ✅ PASS | ✅ PASS |
+| **1 — ER precision scoreboard** | ❌ NOT BUILT | ✅ **PASS — 100.0%**, 0 over-merges, 10/10 near-misses kept apart |
+| **2 — revoke test** | ⚠️ PARTIAL (leaked on 3 surfaces) | ✅ **PASS** — structural filtering everywhere it matters |
+| 3 — decisions reversible | ✅ PASS (no `/review`) | ✅ PASS — and `/review` now exists |
+| W-A — wipe sessions | ✅ PASS | ✅ PASS — plus the residual crew FK race closed |
+| **W-B — brief quality** | ⚠️ 0 rated, ratings losable | ⚠️ **Still 0 rated** — but ratings are no longer lost, and stranded cards are recoverable |
+
+**W-B is the only gate still open, and it cannot be closed by code** — it needs ten
+real delegations rated by you. What changed is that progress is no longer leaked:
+dead dispatches are retryable, un-rated briefs stay reachable via run history, and
+a failed card can no longer take the rest of the run down with it.
