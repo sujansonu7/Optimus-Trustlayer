@@ -227,10 +227,16 @@ export default function CrewClient({
         setLiveError((p) => ({ ...p, [evt.id]: evt.error ?? null }));
         break;
       case "step":
+        // Same rule as the Ask timeline: a repeated seq is a long-running tool
+        // streaming into its result row, so update in place instead of dropping
+        // it — otherwise the card sticks on the first partial frame.
         setSteps((p) => {
           const cur = p[evt.workstreamId] ?? [];
-          if (cur.some((s) => s.seq === evt.step.seq)) return p;
-          return { ...p, [evt.workstreamId]: [...cur, evt.step] };
+          const i = cur.findIndex((s) => s.seq === evt.step.seq);
+          if (i === -1) return { ...p, [evt.workstreamId]: [...cur, evt.step] };
+          const next = cur.slice();
+          next[i] = evt.step;
+          return { ...p, [evt.workstreamId]: next };
         });
         break;
       case "work_product":

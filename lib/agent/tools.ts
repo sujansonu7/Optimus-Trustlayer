@@ -306,12 +306,20 @@ export type ToolOutcome = {
   workProduct?: WorkProduct;
 };
 
+/**
+ * Partial output from a tool that is still running, so the screen can show work
+ * in progress instead of sitting silent. The loop renders each call on the step
+ * the finished tool_result will land on, so the row updates in place.
+ */
+export type ToolProgress = (partial: { summary: string; stdout: string }) => void;
+
 export async function executeTool(
   name: string,
   input: Record<string, unknown>,
   ctx: Session,
   request: string,
-  generatedAt: string
+  generatedAt: string,
+  onProgress?: ToolProgress
 ): Promise<ToolOutcome> {
   switch (name) {
     case "query_graph":
@@ -321,7 +329,7 @@ export async function executeTool(
     case "list_conflicts":
       return listConflicts(input, ctx);
     case "execute_python":
-      return executePython(input, ctx);
+      return executePython(input, ctx, onProgress);
     case "draft_document":
       return draftDocument(input, ctx, request, generatedAt);
     default:
@@ -500,7 +508,16 @@ function referencedEvidenceIds(code: string, stdout: string, ctx: Session): numb
   return Array.from(found).sort((a, b) => a - b);
 }
 
-async function executePython(input: Record<string, unknown>, ctx: Session): Promise<ToolOutcome> {
+// How often, at most, a growing sandbox buffer is pushed to the screen. The
+// sandbox emits a callback per line; coalescing keeps a chatty loop from turning
+// into one SSE frame per print without making the output feel delayed.
+const STREAM_THROTTLE_MS = 200;
+
+async function executePython(
+  input: Record<string, unknown>,
+  ctx: Session,
+  onProgress?: ToolProgress
+): Promise<ToolOutcome> {
   const code = String(input.code ?? "").trim();
   const label = String(input.label ?? "").trim() || "Computation";
   if (!code) {
@@ -529,9 +546,34 @@ async function executePython(input: Record<string, unknown>, ctx: Session): Prom
 
   const files = [{ path: "graph.json", content: JSON.stringify(graphResult.graph) }];
 
+  // Stream the sandbox's output into the visible step as it appears. Without
+  // this the screen sits silent for however long the code runs (up to the 45s
+  // cap) and then everything lands at once — the run looks hung when it isn't.
+  // Coalesced rather than flushed at the end: whatever the throttle holds back
+  // is superseded moments later by the finished tool_result, which carries the
+  // sandbox's complete stdout — so a dropped trailing frame loses nothing.
+  let streamed = "";
+  let lastPushed = 0;
+  // stderr is marked rather than merged silently: a matplotlib warning mid-run
+  // is worth seeing, but it must not read as something the code printed.
+  const append = (chunk: string, isErr: boolean): void => {
+    const line = chunk.endsWith("\n") ? chunk.slice(0, -1) : chunk;
+    streamed += (isErr ? `stderr: ${line}` : line) + "\n";
+    if (!onProgress) return;
+    const now = Date.now();
+    if (now - lastPushed < STREAM_THROTTLE_MS) return;
+    lastPushed = now;
+    onProgress({ summary: `execute_python “${label}” → running…`, stdout: streamed });
+  };
+
   let result;
   try {
-    result = await runner.run(code, { files, timeoutMs: 45_000 });
+    result = await runner.run(code, {
+      files,
+      timeoutMs: 45_000,
+      onStdout: (c) => append(c, false),
+      onStderr: (c) => append(c, true),
+    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return {

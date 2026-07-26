@@ -84,12 +84,15 @@ export async function runAgent(
   await emit({ type: "session", sessionId });
 
   let seq = 0;
-  const step = async (s: Omit<AgentStep, "seq">): Promise<void> => {
-    const full: AgentStep = { ...s, seq: seq++ };
+  // Emit at an already-reserved seq — used by a tool_result whose row was
+  // claimed before the tool ran, so live output can stream into it.
+  const stepAt = async (n: number, s: Omit<AgentStep, "seq">): Promise<void> => {
+    const full: AgentStep = { ...s, seq: n };
     // Persistence is best-effort: a log write must never fail the run.
     await recordStep(sessionId, full).catch((e) => console.error("recordStep failed:", e));
     await emit({ type: "step", step: full });
   };
+  const step = (s: Omit<AgentStep, "seq">): Promise<void> => stepAt(seq++, s);
 
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: question }];
   let workProductId: string | null = null;
@@ -154,14 +157,33 @@ export async function runAgent(
           input: b.input,
           summary: describeCall(b.name, b.input),
         });
+        // Claim the result row up front so a long-running tool can stream into
+        // it. Progress frames go straight to the browser — never to recordStep,
+        // which would write a half-finished summary at this seq and then keep it
+        // (the insert is on-conflict-do-nothing).
+        const resultSeq = seq++;
         const outcome = await executeTool(
           b.name,
           (b.input ?? {}) as Record<string, unknown>,
           ctx,
           question,
-          generatedAt
+          generatedAt,
+          (partial) => {
+            void Promise.resolve(
+              emit({
+                type: "step",
+                step: {
+                  seq: resultSeq,
+                  kind: "tool_result",
+                  toolName: b.name as AgentToolName,
+                  summary: partial.summary,
+                  stdout: partial.stdout,
+                },
+              })
+            ).catch(() => {});
+          }
         );
-        await step({
+        await stepAt(resultSeq, {
           kind: "tool_result",
           toolName: b.name as AgentToolName,
           summary: outcome.summary,

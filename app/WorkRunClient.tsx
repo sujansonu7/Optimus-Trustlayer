@@ -99,7 +99,16 @@ export default function WorkRunClient({
     function handle(evt: RunEvent) {
       switch (evt.type) {
         case "step":
-          setSteps((prev) => (prev.some((s) => s.seq === evt.step.seq) ? prev : [...prev, evt.step]));
+          // A seq can arrive more than once: a long-running tool streams partial
+          // output into its result row before the finished step replaces it. So
+          // a repeat is an UPDATE, not a duplicate to drop.
+          setSteps((prev) => {
+            const i = prev.findIndex((s) => s.seq === evt.step.seq);
+            if (i === -1) return [...prev, evt.step];
+            const next = prev.slice();
+            next[i] = evt.step;
+            return next;
+          });
           break;
         case "work_product":
           setProduct({ id: evt.id, wp: evt.workProduct });
