@@ -78,6 +78,10 @@ export default function CrewClient({
   const [steps, setSteps] = useState<Record<string, AgentStep[]>>(initialSteps);
   const [products, setProducts] = useState<Record<string, { id: string; wp: WorkProduct }>>({});
   const [filedBack, setFiledBack] = useState<Record<string, string>>({});
+  // Per-card error surfaced live (from workstream events), and which cards are
+  // being retried right now.
+  const [liveError, setLiveError] = useState<Record<string, string | null>>({});
+  const [retrying, setRetrying] = useState<Record<string, boolean>>({});
 
   // Brief-quality: local echo + running stats.
   const [quality, setQuality] = useState<Record<string, BriefQuality>>(() =>
@@ -108,6 +112,8 @@ export default function CrewClient({
     setSteps({});
     setProducts({});
     setFiledBack({});
+    setLiveError({});
+    setRetrying({});
     try {
       const res = await fetch("/api/crew/triage", {
         method: "POST",
@@ -126,6 +132,42 @@ export default function CrewClient({
   }
 
   /* ---- Dispatch (SSE) ------------------------------------------------ */
+
+  // Read a dispatch SSE stream to completion, routing each event to handle().
+  async function consumeDispatch(body: object, signal: AbortSignal) {
+    const res = await fetch("/api/crew/dispatch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    });
+    if (!res.ok || !res.body) {
+      const msg = await res.text().catch(() => "");
+      throw new Error(msg || `Dispatch failed (HTTP ${res.status})`);
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() ?? "";
+      for (const part of parts) {
+        const line = part.split("\n").find((l) => l.startsWith("data:"));
+        if (!line) continue;
+        const payload = line.slice(5).trim();
+        if (!payload) continue;
+        try {
+          handle(JSON.parse(payload) as DispatchEvent);
+        } catch {
+          /* skip malformed line */
+        }
+      }
+    }
+  }
+
   async function dispatch() {
     if (!run) return;
     setPhase("dispatching");
@@ -133,37 +175,7 @@ export default function CrewClient({
     const ac = new AbortController();
     dispatchAbort.current = ac;
     try {
-      const res = await fetch("/api/crew/dispatch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ runId: run.id }),
-        signal: ac.signal,
-      });
-      if (!res.ok || !res.body) {
-        const msg = await res.text().catch(() => "");
-        throw new Error(msg || `Dispatch failed (HTTP ${res.status})`);
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop() ?? "";
-        for (const part of parts) {
-          const line = part.split("\n").find((l) => l.startsWith("data:"));
-          if (!line) continue;
-          const payload = line.slice(5).trim();
-          if (!payload) continue;
-          try {
-            handle(JSON.parse(payload) as DispatchEvent);
-          } catch {
-            /* skip malformed line */
-          }
-        }
-      }
+      await consumeDispatch({ runId: run.id }, ac.signal);
       setPhase("board");
     } catch (e) {
       if (ac.signal.aborted) return;
@@ -172,10 +184,39 @@ export default function CrewClient({
     }
   }
 
+  // Retry a single stranded card (queued / needs_input). Runs just that
+  // workstream, leaving the rest of the board as-is.
+  async function redispatch(wsId: string) {
+    if (retrying[wsId]) return;
+    setError(null);
+    // Start this card's timeline fresh so the new run's steps (seq restarts at 0)
+    // don't collide with the old persisted ones.
+    setSteps((p) => ({ ...p, [wsId]: [] }));
+    setLiveError((p) => ({ ...p, [wsId]: null }));
+    setProducts((p) => {
+      const { [wsId]: _drop, ...rest } = p;
+      return rest;
+    });
+    setLiveStatus((p) => ({ ...p, [wsId]: "running" }));
+    setRetrying((p) => ({ ...p, [wsId]: true }));
+    const ac = new AbortController();
+    try {
+      await consumeDispatch({ workstreamId: wsId }, ac.signal);
+    } catch (e) {
+      if (!ac.signal.aborted) {
+        setLiveError((p) => ({ ...p, [wsId]: e instanceof Error ? e.message : String(e) }));
+        setLiveStatus((p) => ({ ...p, [wsId]: "needs_input" }));
+      }
+    } finally {
+      setRetrying((p) => ({ ...p, [wsId]: false }));
+    }
+  }
+
   function handle(evt: DispatchEvent) {
     switch (evt.type) {
       case "workstream":
         setLiveStatus((p) => ({ ...p, [evt.id]: evt.status }));
+        setLiveError((p) => ({ ...p, [evt.id]: evt.error ?? null }));
         break;
       case "step":
         setSteps((p) => {
@@ -235,6 +276,8 @@ export default function CrewClient({
     setSteps({});
     setProducts({});
     setFiledBack({});
+    setLiveError({});
+    setRetrying({});
     setPhase("idle");
   }
 
@@ -406,6 +449,9 @@ export default function CrewClient({
                 product={products[w.id] ?? null}
                 filedBackDoc={filedBack[w.id] ?? null}
                 quality={effQuality(w)}
+                error={liveError[w.id] !== undefined ? liveError[w.id] : w.error}
+                retrying={!!retrying[w.id]}
+                onRetry={() => redispatch(w.id)}
                 onTap={(q) => tapQuality(w.id, q)}
               />
             ))}
@@ -528,6 +574,24 @@ function MiniCard({ w, status, quality }: { w: CrewWorkstream; status: CrewStatu
   );
 }
 
+/** Turn a raw agent/API failure into one plain-English sentence for the card.
+ *  Falls back to the original message (trimmed) when we don't recognize it. */
+function humanizeError(raw: string): string {
+  const m = raw.toLowerCase();
+  if (m.includes("credit balance") || m.includes("insufficient") || m.includes("billing"))
+    return "the AI service is out of credit — top it up, then retry.";
+  if (m.includes("rate limit") || m.includes("429") || m.includes("overloaded"))
+    return "the AI service was busy — wait a moment and retry.";
+  if (m.includes("timeout") || m.includes("timed out") || m.includes("etimedout"))
+    return "it took too long and timed out — retry.";
+  if (m.includes("fetch failed") || m.includes("network") || m.includes("econnreset") || m.includes("enotfound"))
+    return "the AI service couldn’t be reached — check the connection and retry.";
+  if (m.includes("401") || m.includes("api key") || m.includes("authentication"))
+    return "the AI service key is missing or invalid — check the configuration.";
+  const trimmed = raw.trim();
+  return trimmed.length > 200 ? trimmed.slice(0, 200) + "…" : trimmed;
+}
+
 function DetailCard({
   w,
   status,
@@ -535,6 +599,9 @@ function DetailCard({
   product,
   filedBackDoc,
   quality,
+  error,
+  retrying,
+  onRetry,
   onTap,
 }: {
   w: CrewWorkstream;
@@ -543,6 +610,9 @@ function DetailCard({
   product: { id: string; wp: WorkProduct } | null;
   filedBackDoc: string | null;
   quality: BriefQuality | null;
+  error: string | null;
+  retrying: boolean;
+  onRetry: () => void;
   onTap: (q: BriefQuality) => void;
 }) {
   const [openBrief, setOpenBrief] = useState(false);
@@ -574,16 +644,41 @@ function DetailCard({
         {openBrief && w.brief && <BriefView brief={w.brief} />}
 
         {/* Live agent steps */}
-        {steps.length > 0 && <StepTimeline steps={steps} running={status === "running"} />}
+        {steps.length > 0 && <StepTimeline steps={steps} running={status === "running" || retrying} />}
 
-        {/* Needs input */}
-        {status === "needs_input" && (
+        {/* Stranded card — needs input or never dispatched — with a Retry action */}
+        {(status === "needs_input" || status === "queued") && (
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
-            {w.error ? (
-              <>The agent stopped before a deliverable: {w.error}</>
-            ) : (
-              <>The agent finished without a deliverable — this one needs your input. Try re-dispatching or refining the brief.</>
-            )}
+            <p>
+              {status === "queued" ? (
+                <>This workstream hasn’t run yet.</>
+              ) : error ? (
+                <>The agent couldn’t finish this one: {humanizeError(error)}</>
+              ) : (
+                <>The agent finished without a deliverable, so this one needs another pass.</>
+              )}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                onClick={onRetry}
+                disabled={retrying}
+                className="rounded-full border border-amber-400 bg-white px-3 py-1 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-500/50 dark:bg-transparent dark:text-amber-200 dark:hover:bg-amber-500/10"
+              >
+                {retrying ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
+                    Retrying…
+                  </span>
+                ) : status === "queued" ? (
+                  "Dispatch this workstream →"
+                ) : (
+                  "Retry →"
+                )}
+              </button>
+              <span className="text-[11px] text-amber-600 dark:text-amber-400/80">
+                re-runs just this card through the agent
+              </span>
+            </div>
           </div>
         )}
 

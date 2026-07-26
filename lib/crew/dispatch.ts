@@ -13,7 +13,7 @@
 import { runAgent } from "@/lib/agent/loop";
 import type { AgentStep, WorkProduct } from "@/lib/agent/types";
 import { fileWorkProductBack } from "./fileback";
-import { loadRun, setRunStatus, updateWorkstream } from "./store";
+import { getWorkstream, loadRun, setRunStatus, updateWorkstream } from "./store";
 import { MAX_PARALLEL, type CrewStatus, type CrewWorkstream } from "./types";
 
 export type CrewDispatchEvent =
@@ -127,6 +127,40 @@ async function dispatchOne(w: CrewWorkstream, emit: Emit, signal?: AbortSignal):
   const status: CrewStatus = "needs_input";
   await updateWorkstream(w.id, status, { sessionId, error: errored, stamp: "finished" });
   await emit({ type: "workstream", id: w.id, seq: w.seq, status, sessionId, error: errored });
+}
+
+/**
+ * Re-dispatch ONE workstream — the Retry action for a card stranded in
+ * needs_input or queued. Clears any prior error, re-queues it, and runs it
+ * through the same visible agent path as a normal dispatch, streaming the same
+ * events so the board and timeline move live. A card that already produced a
+ * deliverable (review/done) or is an inline item is not re-runnable.
+ */
+export async function redispatchWorkstream(
+  workstreamId: string,
+  emit: Emit,
+  signal?: AbortSignal
+): Promise<void> {
+  const w = await getWorkstream(workstreamId);
+  if (!w) {
+    await emit({ type: "error", message: "That workstream no longer exists — reload the board." });
+    return;
+  }
+  if (w.kind === "inline") {
+    await emit({ type: "error", message: "Inline items are answered directly and don’t dispatch to the agent." });
+    return;
+  }
+  if (w.status !== "needs_input" && w.status !== "queued") {
+    await emit({
+      type: "error",
+      message: "Only cards that are queued or need input can be retried.",
+    });
+    return;
+  }
+
+  // dispatchOne re-queues → running → terminal and clears the old error itself.
+  await dispatchOne({ ...w, status: "queued", error: null }, emit, signal);
+  await emit({ type: "done" });
 }
 
 /**
