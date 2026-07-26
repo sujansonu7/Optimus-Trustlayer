@@ -34,6 +34,13 @@ const KIND_META: Record<DecisionKind, { label: string; cls: string; blurb: strin
 
 type Filter = "all" | DecisionKind;
 
+// Sentinel for the optimistic revert flag. reverted_at is only read for
+// truthiness here (to flip card styling) until router.refresh() reconciles it
+// with the server's real timestamp. We use a non-date marker rather than
+// new Date(0) (which renders as 1970-01-01) so that if this value is ever fed to
+// a date formatter it can never masquerade as a real, plausible date.
+const OPTIMISTIC_REVERT = "pending-server-confirmation";
+
 export default function DecisionsClient({ initial }: { initial: DecisionView[] }) {
   const router = useRouter();
   const [rows, setRows] = useState<DecisionView[]>(initial);
@@ -61,7 +68,7 @@ export default function DecisionsClient({ initial }: { initial: DecisionView[] }
         setRows((prev) =>
           prev.map((r) =>
             r.id === row.id
-              ? { ...r, reverted_at: kind === "revert" ? new Date(0).toISOString() : null }
+              ? { ...r, reverted_at: kind === "revert" ? OPTIMISTIC_REVERT : null }
               : r
           )
         );
