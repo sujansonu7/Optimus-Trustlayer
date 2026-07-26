@@ -39,6 +39,7 @@ import type {
   SourceTool,
   WorkProduct,
   BriefSection,
+  RiskFlag,
   Computation,
   ChartImage,
 } from "./types";
@@ -266,8 +267,21 @@ export const AGENT_TOOLS = [
         },
         risks: {
           type: "array",
-          items: { type: "string" },
-          description: "Plain-English flags: conflicts, stale sources, disconnected systems of record.",
+          description:
+            "Plain-English flags: conflicts, stale sources, disconnected systems of record. Cite evidence ids for a flag wherever the graph supports it — a flag the reader acts on should be traceable. Leave evidence empty ONLY for a judgement you are drawing yourself; it will be labelled as ungrounded.",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              text: { type: "string", description: "the flag, in one plain sentence" },
+              evidence: {
+                type: "array",
+                items: { type: "integer" },
+                description: "evidence ids supporting this flag; empty only for your own judgement",
+              },
+            },
+            required: ["text", "evidence"],
+          },
         },
       },
       required: ["title", "summary", "claims"],
@@ -609,9 +623,25 @@ function draftDocument(
   const title = decodeEntities(String(input.title ?? "Untitled brief").trim()) || "Untitled brief";
   const entity = typeof input.entity === "string" && input.entity.trim() ? decodeEntities(input.entity.trim()) : null;
   const summary = decodeEntities(String(input.summary ?? "").trim());
-  const risks = asArray(input.risks)
-    .map((x) => decodeEntities(String(x).trim()))
-    .filter(Boolean);
+  // Risks carry citations like any other claim. Accept the legacy bare-string
+  // shape too, so an older draft (or a model that ignores the schema) still
+  // renders — just as an explicitly ungrounded flag rather than a sourced one.
+  const risks: RiskFlag[] = asArray(input.risks)
+    .map((x) => {
+      if (typeof x === "string") return { text: decodeEntities(x.trim()), evidence: [] };
+      const r = x as { text?: unknown; evidence?: unknown };
+      return {
+        text: decodeEntities(String(r.text ?? "").trim()),
+        evidence: Array.from(
+          new Set(
+            asArray(r.evidence)
+              .map((n) => Number(n))
+              .filter((n) => Number.isInteger(n) && ctx.hasEvidenceId(n))
+          )
+        ),
+      };
+    })
+    .filter((r) => r.text);
 
   // Ground the brief in CODE: keep only claims whose citations point at real
   // evidence the run actually pulled. Uncited claims are dropped. Claims arrive
@@ -673,6 +703,7 @@ function draftDocument(
   const citedIds = new Set<number>();
   for (const s of sections) for (const c of s.claims) for (const id of c.evidence) citedIds.add(id);
   for (const c of computations) for (const id of c.evidenceIds) citedIds.add(id);
+  for (const r of risks) for (const id of r.evidence) citedIds.add(id);
   const evidence = env.evidence.filter((e) => citedIds.has(e.id));
 
   const workProduct: WorkProduct = {

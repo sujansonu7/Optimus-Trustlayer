@@ -47,19 +47,58 @@ type RawFact = {
 export type Severity = "critical" | "high" | "low";
 
 type AttrMeta = {
-  severity: Severity; // cost-of-staleness tier -> card severity
-  volatility: string; // how fast it moves, for the freshness sentence
+  severity: Severity; // fallback when the freshness table has no matching row
+  volatility: string; // fallback, as above
   scopeKeyword: string | null; // which declaration scope can govern it
   scopeLabel: string | null; // how that scope reads in a sentence
+  artifactType: string; // the freshness_table artifact_type this maps to
 };
 
+// Severity and volatility are POLICY, and policy lives in freshness_table (which
+// /settings edits). These literals are only the fallback for a database whose
+// freshness rows are missing — before, they were the sole source of truth, so
+// editing the staleness tier on /settings changed nothing on /conflicts.
 const ATTR_META: Record<CanonicalAttribute, AttrMeta> = {
-  renewal_date: { severity: "critical", volatility: "days", scopeKeyword: "renewal", scopeLabel: "renewal dates" },
-  arr: { severity: "high", volatility: "months", scopeKeyword: null, scopeLabel: null },
-  owner: { severity: "high", volatility: "months", scopeKeyword: "ownership", scopeLabel: "ownership" },
-  status: { severity: "high", volatility: "days", scopeKeyword: null, scopeLabel: null },
-  tier: { severity: "low", volatility: "stable", scopeKeyword: null, scopeLabel: null },
+  renewal_date: { severity: "critical", volatility: "days", scopeKeyword: "renewal", scopeLabel: "renewal dates", artifactType: "renewal dates" },
+  arr: { severity: "high", volatility: "months", scopeKeyword: null, scopeLabel: null, artifactType: "ARR" },
+  owner: { severity: "high", volatility: "months", scopeKeyword: "ownership", scopeLabel: "ownership", artifactType: "ownership" },
+  status: { severity: "high", volatility: "days", scopeKeyword: null, scopeLabel: null, artifactType: "account status" },
+  tier: { severity: "low", volatility: "stable", scopeKeyword: null, scopeLabel: null, artifactType: "tier" },
 };
+
+const SEVERITY_RANK: Record<Severity, number> = { critical: 3, high: 2, low: 1 };
+
+/**
+ * Per-attribute policy as it currently stands in freshness_table, falling back
+ * to ATTR_META where no row exists. When several sources declare the same
+ * artifact type, the most severe tier wins — the cost of being wrong is set by
+ * the worst case, not an average.
+ */
+async function loadAttrPolicy(): Promise<Record<CanonicalAttribute, AttrMeta>> {
+  const out = { ...ATTR_META };
+  try {
+    const { rows } = await query<{ artifact_type: string; volatility: string; staleness_tier: string }>(
+      `select artifact_type, volatility, staleness_tier from freshness_table`
+    );
+    const byType = new Map<string, { severity: Severity; volatility: string }>();
+    for (const r of rows) {
+      const key = r.artifact_type.trim().toLowerCase();
+      const severity = r.staleness_tier as Severity;
+      if (!SEVERITY_RANK[severity]) continue;
+      const prev = byType.get(key);
+      if (!prev || SEVERITY_RANK[severity] > SEVERITY_RANK[prev.severity]) {
+        byType.set(key, { severity, volatility: r.volatility });
+      }
+    }
+    for (const attr of Object.keys(out) as CanonicalAttribute[]) {
+      const hit = byType.get(out[attr].artifactType.toLowerCase());
+      if (hit) out[attr] = { ...out[attr], severity: hit.severity, volatility: hit.volatility };
+    }
+  } catch {
+    /* freshness table unavailable — the hardcoded fallback stands */
+  }
+  return out;
+}
 
 const SOURCE_LABEL: Record<SourceTool, string> = {
   crm: "the CRM",
@@ -196,6 +235,9 @@ export async function detectConflicts(
       where status = 'ratified' and superseded_at is null`
   );
 
+  // Severity + volatility as currently declared on /settings.
+  const attrPolicy = await loadAttrPolicy();
+
   // The CRM + spreadsheet names form the canonical account universe; email/call
   // short-names resolve into them (or stand alone). See makeResolver.
   const canonicalKeys = new Set<string>();
@@ -302,7 +344,7 @@ export async function detectConflicts(
     // A conflict needs >= 2 distinct values AND >= 2 distinct sources.
     if (b.byValue.size < 2 || sourcesUnion.size < 2) continue;
 
-    const meta = ATTR_META[b.attribute];
+    const meta = attrPolicy[b.attribute];
     const entityLabel = Array.from(b.labels).sort((a, c) => c.length - a.length)[0];
 
     const values: ConflictValue[] = Array.from(b.byValue.entries()).map(([canonical, v]) => {

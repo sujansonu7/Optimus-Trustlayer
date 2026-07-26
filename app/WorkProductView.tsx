@@ -58,17 +58,44 @@ export default function WorkProductView({
       </div>
 
       <div className="px-6 py-5">
-        {/* Executive summary */}
-        {wp.summary && <p className="text-base leading-relaxed text-neutral-800 dark:text-neutral-100">{wp.summary}</p>}
+        {/* Executive summary. Labelled as synthesis: it restates the cited
+            findings below rather than adding a new sourced claim, and saying so
+            keeps the "every claim is cited" promise literally true. */}
+        {wp.summary && (
+          <>
+            <p className="text-base leading-relaxed text-neutral-800 dark:text-neutral-100">{wp.summary}</p>
+            <p className="mt-1 text-xs text-neutral-400">
+              Summary — the agent’s synthesis of the cited findings below.
+            </p>
+          </>
+        )}
 
-        {/* Risk flags */}
+        {/* Risk flags, each with its citations. A flag the agent asserted without
+            grounding is marked as such rather than sitting next to sourced ones. */}
         {wp.risks.length > 0 && (
           <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-500/40 dark:bg-amber-500/10">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">Flags</div>
-            <ul className="list-disc space-y-0.5 pl-5 text-sm text-amber-800 dark:text-amber-200">
-              {wp.risks.map((r, i) => (
-                <li key={i}>{r}</li>
-              ))}
+            <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">Flags</div>
+            <ul className="space-y-2 text-sm text-amber-800 dark:text-amber-200">
+              {wp.risks.map((r, i) => {
+                // Tolerate the legacy bare-string shape from briefs saved earlier.
+                const text = typeof r === "string" ? r : r.text;
+                const ids = typeof r === "string" ? [] : r.evidence ?? [];
+                const cited = ids.filter((id) => byId.has(id));
+                return (
+                  <li key={i}>
+                    <span>{text}</span>
+                    {cited.length > 0 ? (
+                      <div className="mt-1">
+                        <EvidenceChips ids={cited} byId={byId} />
+                      </div>
+                    ) : (
+                      <span className="ml-1.5 text-xs text-amber-600/80 dark:text-amber-400/70">
+                        · the agent’s own judgement, not tied to a source
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

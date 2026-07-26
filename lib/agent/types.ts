@@ -75,6 +75,14 @@ export type BriefSection = {
 };
 
 /**
+ * A risk flag. Carries evidence ids like any other claim, so a flag the reader
+ * acts on can be traced to a source. `evidence: []` means the agent asserted it
+ * without grounding — the work product renders that state explicitly rather than
+ * letting it read as a sourced finding.
+ */
+export type RiskFlag = { text: string; evidence: number[] };
+
+/**
  * A work product: a formatted brief whose every claim carries envelope
  * citations. Saved to /library. This is what draft_document produces and what
  * the work-product page renders.
@@ -86,7 +94,7 @@ export type WorkProduct = {
   summary: string; // 1–2 sentence executive summary
   sections: BriefSection[];
   computations: Computation[]; // code the agent ran + its output and charts
-  risks: string[]; // plain-English flags ("sources disagree on the renewal date")
+  risks: RiskFlag[]; // plain-English flags ("sources disagree on the renewal date")
   // The shared envelope, accumulated across the run:
   evidence: EvidenceItem[]; // the citable pool (session-global ids)
   conflicts: ConflictBlock[]; // conflicts touched by the brief

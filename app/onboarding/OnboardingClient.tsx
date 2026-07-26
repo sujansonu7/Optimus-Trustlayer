@@ -6,6 +6,7 @@ import { useIngestStream, type SourceTool } from "@/lib/useIngestStream";
 import type { ProofQuestion, SuggestedDeclaration, DeclarationChoice, SheetStatus } from "@/lib/onboarding";
 import {
   verifySheetAction,
+  connectSourceAction,
   materializeAction,
   writeDeclarationsAction,
   proofQuestionsAction,
@@ -187,13 +188,21 @@ function Connect({ onDone }: { onDone: () => void }) {
       } catch (e) {
         setSheetErr(e instanceof Error ? e.message : String(e));
       }
-      setState((s) => ({ ...s, spreadsheet: "connected" }));
     } else {
       // Simulate the OAuth handshake the other connectors would perform.
       const delay = 700 + tool.length * 120;
       await new Promise((r) => setTimeout(r, delay));
-      setState((s) => ({ ...s, [tool]: "connected" }));
     }
+    // Actually reconnect the source in the ledger, so a card reading
+    // "✓ Connected" means the product will really retrieve from it. Without
+    // this, a source revoked in an earlier demo stayed revoked while the wizard
+    // claimed otherwise.
+    try {
+      await connectSourceAction(tool);
+    } catch {
+      /* non-fatal: the build step below is what actually loads the data */
+    }
+    setState((s) => ({ ...s, [tool]: "connected" }));
   }, []);
 
   const allConnected = TOOL_ORDER.every((t) => state[t] === "connected");
