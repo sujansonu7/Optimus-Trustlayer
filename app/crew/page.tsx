@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { isDatabaseReachable } from "@/lib/db";
 import { loadLatestRun, loadParallelEnabled, briefQualityStats } from "@/lib/crew/store";
+import { loadStepsForSessions } from "@/lib/agent/library";
+import type { AgentStep } from "@/lib/agent/types";
 import type { BriefQualityStats, CrewRun } from "@/lib/crew/types";
 import CrewClient from "./CrewClient";
 
@@ -15,6 +17,9 @@ export default async function CrewPage() {
   let initialRun: CrewRun | null = null;
   let parallelEnabled = false;
   let stats: BriefQualityStats = { rated: 0, noCorrection: 0, correction: 0, pct: null };
+  // Persisted step logs, keyed by WORKSTREAM id, so each card's timeline survives
+  // a page reload (the live SSE steps are gone after a refresh).
+  let initialSteps: Record<string, AgentStep[]> = {};
   let migrated = true;
   if (dbConnected) {
     try {
@@ -23,6 +28,14 @@ export default async function CrewPage() {
         loadParallelEnabled(),
         briefQualityStats(),
       ]);
+      const withSession = (initialRun?.workstreams ?? []).filter((w) => w.sessionId);
+      if (withSession.length > 0) {
+        const bySession = await loadStepsForSessions(withSession.map((w) => w.sessionId as string));
+        for (const w of withSession) {
+          const steps = bySession[w.sessionId as string];
+          if (steps && steps.length > 0) initialSteps[w.id] = steps;
+        }
+      }
     } catch {
       migrated = false;
     }
@@ -60,7 +73,12 @@ export default async function CrewPage() {
           this page.
         </div>
       ) : (
-        <CrewClient initialRun={initialRun} parallelEnabled={parallelEnabled} qualityStats={stats} />
+        <CrewClient
+          initialRun={initialRun}
+          parallelEnabled={parallelEnabled}
+          qualityStats={stats}
+          initialSteps={initialSteps}
+        />
       )}
 
       {/* Footer nav */}

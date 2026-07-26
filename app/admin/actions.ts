@@ -46,9 +46,11 @@ export async function resetDemoAction(): Promise<{ cleared: string[] }> {
  * Delete every agent run log (sessions + steps). Proves standing rule #5: the
  * engine holds no durable knowledge. Facts, declarations, conflicts, and the
  * delivered work products in the Library are all untouched — only the disposable
- * run state disappears. Returns how many sessions were removed.
+ * run state disappears. Sessions that are still running are kept (deleting one
+ * mid-run is what caused the FK step errors). Returns how many sessions were
+ * removed and how many running sessions were left in place.
  */
-export async function clearAgentSessionsAction(): Promise<{ sessions: number }> {
+export async function clearAgentSessionsAction(): Promise<{ sessions: number; skipped: number }> {
   const result = await clearAgentSessions();
   revalidatePath("/admin");
   return result;

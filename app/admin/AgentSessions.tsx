@@ -19,9 +19,13 @@ export default function AgentSessions({ sessionCount }: { sessionCount: number |
     setFlash(null);
     startTransition(async () => {
       try {
-        const { sessions } = await clearAgentSessionsAction();
+        const { sessions, skipped } = await clearAgentSessionsAction();
+        const kept =
+          skipped > 0
+            ? ` Kept ${skipped} still-running session${skipped === 1 ? "" : "s"} so their step logs aren’t cut off mid-run.`
+            : "";
         setFlash(
-          `Cleared ${sessions} agent session${sessions === 1 ? "" : "s"}. Knowledge and the Library are untouched — nothing about what the product knows changed.`
+          `Cleared ${sessions} agent session${sessions === 1 ? "" : "s"}. Knowledge and the Library are untouched — nothing about what the product knows changed.${kept}`
         );
         router.refresh();
       } catch (err) {

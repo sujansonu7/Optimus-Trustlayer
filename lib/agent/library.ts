@@ -17,9 +17,15 @@ export async function createSession(question: string, mode: AskMode): Promise<st
 }
 
 export async function recordStep(sessionId: string, step: AgentStep): Promise<void> {
+  // Insert the step ONLY if its session still exists. If the session row was
+  // deleted mid-run (someone cleared run logs, or a race), this becomes a clean
+  // no-op instead of throwing an FK violation (agent_steps_session_id_fkey) — the
+  // guard and the insert are one atomic statement, so there is no TOCTOU window.
+  // Steps that DO land are durable and survive a page reload (see loadSteps).
   await query(
     `insert into agent_steps (session_id, seq, kind, tool_name, input_json, summary)
-     values ($1, $2, $3, $4, $5::jsonb, $6)
+     select $1, $2, $3, $4, $5::jsonb, $6
+     where exists (select 1 from agent_sessions where id = $1)
      on conflict (session_id, seq) do nothing`,
     [
       sessionId,
@@ -30,6 +36,48 @@ export async function recordStep(sessionId: string, step: AgentStep): Promise<vo
       step.summary,
     ]
   );
+}
+
+/** Load a session's persisted step log, in order — used to rehydrate a run view
+ *  after a page reload. stdout/charts are not persisted (they live on the work
+ *  product's computations), so a reloaded timeline shows the steps without them. */
+export async function loadSteps(sessionId: string): Promise<AgentStep[]> {
+  const map = await loadStepsForSessions([sessionId]);
+  return map[sessionId] ?? [];
+}
+
+/** Batch variant: persisted steps for many sessions at once, keyed by session id.
+ *  Lets the crew board rehydrate every card's step log in a single query. */
+export async function loadStepsForSessions(
+  sessionIds: string[]
+): Promise<Record<string, AgentStep[]>> {
+  const ids = Array.from(new Set(sessionIds.filter(Boolean)));
+  if (ids.length === 0) return {};
+  const { rows } = await query<{
+    session_id: string;
+    seq: number;
+    kind: string;
+    tool_name: string | null;
+    input_json: unknown;
+    summary: string;
+  }>(
+    `select session_id, seq, kind, tool_name, input_json, summary
+       from agent_steps
+      where session_id = any($1::uuid[])
+      order by session_id, seq`,
+    [ids]
+  );
+  const out: Record<string, AgentStep[]> = {};
+  for (const r of rows) {
+    (out[r.session_id] ??= []).push({
+      seq: r.seq,
+      kind: r.kind as AgentStep["kind"],
+      toolName: (r.tool_name as AgentStep["toolName"]) ?? null,
+      input: r.input_json ?? undefined,
+      summary: r.summary,
+    });
+  }
+  return out;
 }
 
 export async function finishSession(
@@ -44,9 +92,13 @@ export async function finishSession(
 }
 
 export async function saveWorkProduct(sessionId: string, wp: WorkProduct): Promise<string> {
+  // Resolve session_id through a lookup so that if the session was cleared
+  // mid-run the product is still saved with a null session (matching the FK's
+  // ON DELETE SET NULL) rather than failing on the FK. A delivered brief must
+  // always reach the Library, regardless of run state.
   const { rows } = await query<{ id: string }>(
     `insert into work_products (session_id, title, entity, request, body_json)
-     values ($1, $2, $3, $4, $5::jsonb) returning id`,
+     values ((select id from agent_sessions where id = $1), $2, $3, $4, $5::jsonb) returning id`,
     [sessionId, wp.title, wp.entity, wp.request, JSON.stringify(wp)]
   );
   return rows[0].id;
@@ -104,9 +156,18 @@ export async function loadWorkProduct(id: string): Promise<WorkProductRow | null
  * delivered briefs stay in the Library. (TRUNCATE ... CASCADE would ignore SET
  * NULL and wipe work_products too — exactly what must NOT happen.) Facts,
  * declarations, and conflicts are never referenced here — nothing about the
- * product's knowledge changes. Returns how many sessions were removed.
+ * product's knowledge changes.
+ *
+ * A session that is still 'running' is NEVER deleted: pulling its row out from
+ * under a live run is the main cause of the FK step errors this fix eliminates.
+ * Those are left in place; everything terminal (done/error) is wiped. Returns how
+ * many sessions were removed and how many running sessions were kept.
  */
-export async function clearAgentSessions(): Promise<{ sessions: number }> {
-  const { rowCount } = await query(`delete from agent_sessions`);
-  return { sessions: rowCount ?? 0 };
+export async function clearAgentSessions(): Promise<{ sessions: number; skipped: number }> {
+  const { rows } = await query<{ n: string }>(
+    `select count(*)::text as n from agent_sessions where status = 'running'`
+  );
+  const skipped = Number(rows[0]?.n ?? 0);
+  const { rowCount } = await query(`delete from agent_sessions where status <> 'running'`);
+  return { sessions: rowCount ?? 0, skipped };
 }

@@ -56,10 +56,12 @@ export default function CrewClient({
   initialRun,
   parallelEnabled,
   qualityStats,
+  initialSteps = {},
 }: {
   initialRun: CrewRun | null;
   parallelEnabled: boolean;
   qualityStats: BriefQualityStats;
+  initialSteps?: Record<string, AgentStep[]>;
 }) {
   const [run, setRun] = useState<CrewRun | null>(initialRun);
   const [note, setNote] = useState<string | null>(null);
@@ -69,9 +71,11 @@ export default function CrewClient({
   const [brainDump, setBrainDump] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Live dispatch overlays, keyed by workstream id.
+  // Live dispatch overlays, keyed by workstream id. Steps seed from the persisted
+  // logs (initialSteps) so a reloaded board still shows each card's timeline;
+  // live dispatch then appends to them.
   const [liveStatus, setLiveStatus] = useState<Record<string, CrewStatus>>({});
-  const [steps, setSteps] = useState<Record<string, AgentStep[]>>({});
+  const [steps, setSteps] = useState<Record<string, AgentStep[]>>(initialSteps);
   const [products, setProducts] = useState<Record<string, { id: string; wp: WorkProduct }>>({});
   const [filedBack, setFiledBack] = useState<Record<string, string>>({});
 
