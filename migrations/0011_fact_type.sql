@@ -1,0 +1,12 @@
+-- 0011_fact_type.sql
+-- Persist the fact's TYPE (the classification) on every stored fact.
+--
+-- For CSV/spreadsheet rows the type is assigned deterministically by the column
+-- spec in lib/ingest.ts; for emails and call transcripts it is the model's own
+-- classification (account | deal | renewal | pricing | commitment | person).
+--
+-- Until now the type was computed at extraction time and thrown away. Storing it
+-- is what lets /decisions show every automatic CLASSIFICATION with its exact
+-- source line as the "why" — and lets reverting one supersede precisely that
+-- fact. Purely additive: nullable, so pre-existing rows are simply untyped.
+alter table facts add column if not exists fact_type text;
