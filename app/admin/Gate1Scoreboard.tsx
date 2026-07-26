@@ -36,9 +36,10 @@ export default async function Gate1Scoreboard() {
             gate failed
           </span>
         )}
-        <span className="ml-auto text-xs text-neutral-400">
-          {report.evaluated} labeled pairs graded
-        </span>
+        <a href="/review" className="ml-auto text-sm text-blue-700 hover:underline dark:text-blue-400">
+          Review queue →
+        </a>
+        <span className="text-xs text-neutral-400">{report.evaluated} labeled pairs graded</span>
       </div>
 
       {/* The number the gate is set on. */}

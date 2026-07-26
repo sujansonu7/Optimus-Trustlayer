@@ -101,6 +101,8 @@ export default async function Home({
           ["/sources", "Sources"],
           ["/admin", "Admin"],
           ["/facts", "Facts"],
+          ["/entities", "Entities"],
+          ["/review", "Review"],
           ["/conflicts", "Conflicts"],
           ["/decisions", "Decisions"],
           ["/crew", "Crew"],

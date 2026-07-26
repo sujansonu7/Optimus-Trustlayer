@@ -22,9 +22,32 @@ export type DecisionOverrides = {
   splitKeys: Set<string>;
   /** `${entity_key}::${canonical_attribute}` -> forced winning canonical value. */
   arbOverrides: Map<string, string>;
+  /**
+   * Alias key -> canonical key, approved by a human on /review. The resolver is
+   * conservative by design and leaves real aliases unlinked ("SLG",
+   * "silverlinelogistics.io"); these are the ones someone has since confirmed.
+   */
+  mergeKeys: Map<string, string>;
 };
 
-const EMPTY: DecisionOverrides = { splitKeys: new Set(), arbOverrides: new Map() };
+const EMPTY: DecisionOverrides = {
+  splitKeys: new Set(),
+  arbOverrides: new Map(),
+  mergeKeys: new Map(),
+};
+
+/** Human-approved merges from /review. Separate query so a missing table (not
+ *  yet migrated) degrades to "no approved merges" rather than failing the page. */
+async function loadApprovedMerges(): Promise<Map<string, string>> {
+  try {
+    const { rows } = await query<{ alias_key: string; canonical_key: string }>(
+      `select alias_key, canonical_key from resolution_reviews where verdict = 'merge'`
+    );
+    return new Map(rows.map((r) => [r.alias_key, r.canonical_key]));
+  } catch {
+    return new Map();
+  }
+}
 
 export async function loadDecisionOverrides(): Promise<DecisionOverrides> {
   try {
@@ -50,7 +73,7 @@ export async function loadDecisionOverrides(): Promise<DecisionOverrides> {
         arbOverrides.set(`${r.entity_key}::${r.attribute}`, r.loser_canonical);
       }
     }
-    return { splitKeys, arbOverrides };
+    return { splitKeys, arbOverrides, mergeKeys: await loadApprovedMerges() };
   } catch {
     // decisions table not migrated yet — behave as if there are no overrides.
     return EMPTY;

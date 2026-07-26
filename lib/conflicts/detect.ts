@@ -204,9 +204,13 @@ export async function detectConflicts(
   // Human overrides from the decision log (a reverted merge splits an alias out;
   // a reverted arbitration flips the winner). Materialization asks for the
   // pristine automatic decision by passing applyOverrides:false.
-  const { splitKeys, arbOverrides } =
+  const { splitKeys, arbOverrides, mergeKeys } =
     opts?.applyOverrides === false
-      ? { splitKeys: new Set<string>(), arbOverrides: new Map<string, string>() }
+      ? {
+          splitKeys: new Set<string>(),
+          arbOverrides: new Map<string, string>(),
+          mergeKeys: new Map<string, string>(),
+        }
       : await loadDecisionOverrides();
 
   // Trust is revocable: when the caller passes the connected tools, a
@@ -250,7 +254,10 @@ export async function detectConflicts(
 
   const keyFor = (raw: string): string => {
     const rk = entityKey(raw);
-    return splitKeys.has(rk) ? rk : resolve(rk);
+    // A human split always wins; then a human-approved merge from /review; then
+    // the automatic resolver.
+    if (splitKeys.has(rk)) return rk;
+    return mergeKeys.get(rk) ?? resolve(rk);
   };
 
   // Per entity, the canonical owner values a STRUCTURED source (CRM / Renewals
@@ -294,7 +301,7 @@ export async function detectConflicts(
     // A split alias (a reverted merge) is pulled out of its canonical group and
     // stands on its own key, so its facts no longer join the account.
     const rawKey = entityKey(r.entity_ref);
-    const ek = splitKeys.has(rawKey) ? rawKey : resolve(rawKey);
+    const ek = splitKeys.has(rawKey) ? rawKey : mergeKeys.get(rawKey) ?? resolve(rawKey);
 
     // Anchoring: an owner value seen only in free-text email/calls must
     // corroborate a structured (CRM/Sheet) owner value for this account, or it

@@ -150,7 +150,7 @@ export async function buildGraphExport(ctx: Session): Promise<GraphExportResult>
     return { graph: empty, evidenceCount: 0, conflictCount: 0 };
   }
 
-  const { splitKeys } = await loadDecisionOverrides();
+  const { splitKeys, mergeKeys } = await loadDecisionOverrides();
 
   // 1) Every currently-believed fact from CONNECTED sources only. Disconnected
   //    tools are excluded at the SQL boundary — they can't leak into compute.
@@ -179,7 +179,7 @@ export async function buildGraphExport(ctx: Session): Promise<GraphExportResult>
   const groups = new Map<string, Group>();
   for (const r of rows) {
     const rawKey = entityKey(r.entity_ref);
-    const gk = splitKeys.has(rawKey) ? rawKey : resolve(rawKey);
+    const gk = splitKeys.has(rawKey) ? rawKey : mergeKeys.get(rawKey) ?? resolve(rawKey);
     let g = groups.get(gk);
     if (!g) {
       g = { key: gk, labels: new Set(), facts: [] };

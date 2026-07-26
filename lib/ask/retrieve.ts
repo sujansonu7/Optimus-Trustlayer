@@ -202,7 +202,7 @@ export async function retrieve(
 
   // Human overrides from the decision log: a reverted merge splits an alias out
   // of its account; a reverted arbitration forces a specific winner.
-  const { splitKeys, arbOverrides } = await loadDecisionOverrides();
+  const { splitKeys, arbOverrides, mergeKeys } = await loadDecisionOverrides();
 
   // 1) Load every currently-believed fact from CONNECTED sources only. The
   //    disconnected tools are excluded right here, at the SQL boundary.
@@ -233,7 +233,7 @@ export async function retrieve(
     const rawKey = entityKey(r.entity_ref);
     // A split alias (a reverted merge) stands on its own key instead of folding
     // into its canonical account — so its facts stop joining that account.
-    const gk = splitKeys.has(rawKey) ? rawKey : resolve(rawKey);
+    const gk = splitKeys.has(rawKey) ? rawKey : mergeKeys.get(rawKey) ?? resolve(rawKey);
     let g = groups.get(gk);
     if (!g) {
       g = { key: gk, labels: new Set(), facts: [] };
