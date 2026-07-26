@@ -7,7 +7,14 @@ import ConflictsClient from "./ConflictsClient";
 // Conflicts are a live view over the ledger — recompute on every request.
 export const dynamic = "force-dynamic";
 
-export default async function ConflictsPage() {
+export default async function ConflictsPage({
+  searchParams,
+}: {
+  searchParams?: { qa?: string };
+}) {
+  // /conflicts?qa=1 reveals the planted-conflict chips and filter — a QA aid
+  // that shows the app knows which conflicts were seeded. Off for demos.
+  const qa = searchParams?.qa === "1";
   let conflicts: Conflict[] = [];
   let migrated = true;
   let disconnected: string[] = [];
@@ -23,6 +30,10 @@ export default async function ConflictsPage() {
     // Ledger not built yet (no facts) or DB unreachable.
     migrated = false;
   }
+
+  // Outside QA mode, drop the answer-key tag entirely rather than just hiding
+  // the chip — it should not travel to the browser at all.
+  if (!qa) conflicts = conflicts.map((c) => ({ ...c, planted: null }));
 
   return (
     <main className="mx-auto min-h-screen max-w-4xl px-4 py-8 sm:px-6">
@@ -69,7 +80,7 @@ export default async function ConflictsPage() {
               to restore it.
             </div>
           )}
-          <ConflictsClient conflicts={conflicts} />
+          <ConflictsClient conflicts={conflicts} qa={qa} />
         </>
       )}
     </main>

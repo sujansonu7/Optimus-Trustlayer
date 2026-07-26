@@ -32,9 +32,11 @@ export default function ResetDemo() {
     <section className="mt-10 rounded-xl border border-red-200 bg-red-50/40 p-5 dark:border-red-500/30 dark:bg-red-500/5">
       <h2 className="text-lg font-semibold tracking-tight text-red-800 dark:text-red-300">Reset demo</h2>
       <p className="mt-1 max-w-2xl text-sm text-neutral-600 dark:text-neutral-400">
-        Wipe all derived data — the fact ledger, ingest cache, belief cache, resolved entities, and the
-        decision log — and restore the seed declarations and source connections. The fixture files are
-        untouched, so the build reconstructs everything. Use this to run{" "}
+        Wipe all derived data — the fact ledger, ingest cache, belief cache, resolved entities, the
+        decision log, <strong>every crew run and its brief-quality ratings</strong>, and{" "}
+        <strong>every work product in the Library</strong> — and restore the seed declarations and
+        source connections. The fixture files are untouched, so the build reconstructs everything.
+        Use this to run{" "}
         <a href="/onboarding" className="font-medium underline">/onboarding</a> again from a clean slate.
       </p>
 

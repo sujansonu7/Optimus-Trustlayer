@@ -258,10 +258,13 @@ async function persistDoc(
   try {
     await client.query("begin");
 
-    // Supersede this document's currently-believed facts.
-    await client.query(
+    // Supersede this document's currently-believed facts. Keep their ids so the
+    // replacement can be linked below — superseded_at alone says "this is no
+    // longer believed" but not "this is what replaced it".
+    const superseded = await client.query<{ id: string }>(
       `update facts set superseded_at = now()
-        where source_doc = $1 and superseded_at is null`,
+        where source_doc = $1 and superseded_at is null
+        returning id`,
       [doc]
     );
 
@@ -285,6 +288,27 @@ async function persistDoc(
           f.source_offset,
           f.fact_type,
         ]
+      );
+    }
+
+    // Close the bitemporal chain: point each row we just superseded at the fact
+    // that replaced it, matched on (entity_ref, attribute) within this document.
+    // A row whose attribute vanished from the source keeps a null superseded_by —
+    // correctly, since nothing replaced it.
+    if (superseded.rowCount && superseded.rowCount > 0) {
+      await client.query(
+        `update facts old
+            set superseded_by = nf.id
+           from (
+             select distinct on (entity_ref, attribute) id, entity_ref, attribute
+               from facts
+              where source_doc = $1 and superseded_at is null
+              order by entity_ref, attribute, recorded_at desc
+           ) nf
+          where old.id = any($2::uuid[])
+            and old.entity_ref = nf.entity_ref
+            and old.attribute = nf.attribute`,
+        [doc, superseded.rows.map((r) => r.id)]
       );
     }
 

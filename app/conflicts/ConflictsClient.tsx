@@ -52,7 +52,7 @@ function SourceChip({
   );
 }
 
-function ConflictCard({ c }: { c: Conflict }) {
+function ConflictCard({ c, qa }: { c: Conflict; qa: boolean }) {
   const sev = SEV_STYLE[c.severity];
   return (
     <article
@@ -66,7 +66,7 @@ function ConflictCard({ c }: { c: Conflict }) {
         <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${sev.chip}`}>
           {sev.label} · cost of being wrong
         </span>
-        {c.planted && (
+        {qa && c.planted && (
           <span className="ml-auto rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
             planted {c.planted.split(" ")[0]}
           </span>
@@ -124,7 +124,13 @@ function ConflictCard({ c }: { c: Conflict }) {
   );
 }
 
-export default function ConflictsClient({ conflicts }: { conflicts: Conflict[] }) {
+export default function ConflictsClient({
+  conflicts,
+  qa = false,
+}: {
+  conflicts: Conflict[];
+  qa?: boolean;
+}) {
   const [onlyPlanted, setOnlyPlanted] = useState(false);
 
   const counts = useMemo(() => {
@@ -147,15 +153,19 @@ export default function ConflictsClient({ conflicts }: { conflicts: Conflict[] }
         <span className={`rounded-md px-2.5 py-1 text-xs font-medium ${SEV_STYLE.low.chip}`}>
           {counts.low} low
         </span>
-        <label className="ml-auto flex items-center gap-2 text-sm text-neutral-500">
-          <input
-            type="checkbox"
-            checked={onlyPlanted}
-            onChange={(e) => setOnlyPlanted(e.target.checked)}
-            className="h-4 w-4 rounded border-neutral-300"
-          />
-          Only planted conflicts
-        </label>
+        {/* QA affordance, not a demo one: it reveals that the app knows which
+            conflicts were seeded. Hidden unless /conflicts?qa=1. */}
+        {qa && (
+          <label className="ml-auto flex items-center gap-2 text-sm text-neutral-500">
+            <input
+              type="checkbox"
+              checked={onlyPlanted}
+              onChange={(e) => setOnlyPlanted(e.target.checked)}
+              className="h-4 w-4 rounded border-neutral-300"
+            />
+            Only planted conflicts
+          </label>
+        )}
       </div>
 
       {shown.length === 0 ? (
@@ -165,7 +175,7 @@ export default function ConflictsClient({ conflicts }: { conflicts: Conflict[] }
       ) : (
         <div className="grid gap-4">
           {shown.map((c) => (
-            <ConflictCard key={c.id} c={c} />
+            <ConflictCard key={c.id} c={c} qa={qa} />
           ))}
         </div>
       )}

@@ -31,8 +31,12 @@ const STRONG =
 // simple. Covers the three compute demos:
 //   "QBR summary … with a revenue chart", "pipeline summary by stage with
 //   totals", "renewal calendar for next quarter".
+// Note "totals" is plural-only: the bare word "total" appears in ordinary
+// questions ("what is the total ARR for Silverline?"), which should answer
+// simply rather than spin up a full agent run. "with totals" as an artifact
+// request is still caught, via `with\s+totals` and the by-* groupings.
 const COMPUTE =
-  /\b(chart|charts|graph|plot|calendar|qbr|dashboard|breakdown|totals?|by\s+stage|by\s+month|by\s+industry|per\s+stage)\b/i;
+  /\b(chart|charts|graph|plot|calendar|qbr|dashboard|breakdown|totals|by\s+stage|by\s+month|by\s+industry|per\s+stage)\b/i;
 
 export function classify(question: string): AskMode {
   const q = question.trim();
