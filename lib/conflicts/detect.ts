@@ -19,6 +19,7 @@ import {
   makeResolver,
   normalizeValue,
   displayValue,
+  isAddressHeaderQuote,
   ATTR_LABEL,
   type CanonicalAttribute,
 } from "./normalize";
@@ -38,6 +39,7 @@ type RawFact = {
   source_tool: SourceTool;
   source_doc: string;
   doc_timestamp: string | null;
+  source_quote: string | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -173,7 +175,7 @@ export async function detectConflicts(
   const { rows } = await query<RawFact>(
     // Cast the timestamp to a stable ISO string here — the pg driver otherwise
     // hands back a JS Date, and everything downstream expects a string.
-    `select entity_ref, attribute, value, source_tool, source_doc,
+    `select entity_ref, attribute, value, source_tool, source_doc, source_quote,
             to_char(doc_timestamp at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as doc_timestamp
        from facts
       where superseded_at is null`
@@ -208,6 +210,11 @@ export async function detectConflicts(
   for (const r of rows) {
     const attr = canonicalAttribute(r.attribute);
     if (!attr) continue;
+    // An owner name pulled from an email address header (To:/From:/Cc:) is a
+    // correspondent, not an ownership assertion — drop it so a handoff email's
+    // recipient (a customer contact) can't masquerade as the account owner. The
+    // real signal lives in the message body and still counts.
+    if (attr === "owner" && isAddressHeaderQuote(r.source_quote)) continue;
     const canonical = normalizeValue(attr, r.value);
     if (canonical === null || canonical === "") continue; // non-comparable → ignore
 
