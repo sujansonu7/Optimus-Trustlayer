@@ -7,7 +7,7 @@
 import { JWT } from "google-auth-library";
 import fs from "node:fs";
 import path from "node:path";
-import type { CsvTable } from "./fixture";
+import { parseCsv, type CsvTable } from "./fixture";
 
 // The spreadsheet that backs the Renewals tab. Defaults to the sheet the owner
 // provided; overridable via env so the source can change without code edits.
@@ -58,6 +58,48 @@ export type LiveRenewals = {
   /** ISO-8601 last-modified time of the spreadsheet, from Drive metadata. */
   lastModified: string | null;
 };
+
+/**
+ * Fetch the sheet as CSV from a "Publish to web" link — no service account, no
+ * Google Cloud project, no auth of any kind. This is still a LIVE read: the URL
+ * is served by Google and reflects sheet edits within about a minute, so a green
+ * badge behind this path is honest.
+ *
+ * The tradeoff is access, not accuracy — a published link is readable by anyone
+ * who has it. Use it when GCP isn't available; prefer the service account, which
+ * keeps the sheet private and yields an exact Drive modifiedTime.
+ *
+ * Throws on any network/HTTP failure so the caller can fall back to the cache.
+ */
+export async function fetchPublishedRenewals(url: string): Promise<LiveRenewals> {
+  const res = await fetch(url, { cache: "no-store", redirect: "follow" });
+  if (!res.ok) {
+    throw new Error(`Published CSV ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+
+  const text = await res.text();
+  // A wrong/unpublished link returns Google's HTML error page with a 200, so
+  // reject anything that isn't actually CSV rather than rendering markup as rows.
+  if (/^\s*</.test(text)) {
+    throw new Error(
+      "Published CSV URL returned HTML, not CSV — check the link is a published " +
+        "output=csv link and that publishing is still enabled."
+    );
+  }
+
+  const { headers, rows } = parseCsv(text);
+  if (headers.length === 0) throw new Error("Published CSV had no header row");
+
+  // Google sends Last-Modified on this endpoint; when it's absent we say we
+  // don't know rather than passing off fetch time as an edit time.
+  const header = res.headers.get("last-modified");
+  const parsed = header ? Date.parse(header) : NaN;
+
+  return {
+    table: { headers, rows },
+    lastModified: Number.isNaN(parsed) ? null : new Date(parsed).toISOString(),
+  };
+}
 
 /**
  * Fetch the first sheet's cell values (formatted, as displayed) plus the

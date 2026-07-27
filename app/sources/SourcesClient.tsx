@@ -220,14 +220,23 @@ function FreshnessBadge({
     );
   }
 
+  // Not every live path exposes an edit time — a published-CSV read has no Drive
+  // metadata behind it. Say what we actually know (the read is fresh) instead of
+  // claiming an "updated" time we were never told.
   return (
     <div
       className="flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs dark:border-emerald-500/40 dark:bg-emerald-500/10"
-      title={`Live from Google Sheets. Sheet last modified ${when}.`}
+      title={
+        lastModified
+          ? `Live from Google Sheets. Sheet last modified ${when}.`
+          : "Live from Google Sheets, read when this page loaded. This source doesn't report a last-modified time."
+      }
     >
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
       <span className="font-medium text-emerald-800 dark:text-emerald-300">Live</span>
-      <span className="text-emerald-700/70 dark:text-emerald-400/70">· updated {rel ?? when}</span>
+      <span className="text-emerald-700/70 dark:text-emerald-400/70">
+        {rel ? `· updated ${rel}` : "· read just now"}
+      </span>
     </div>
   );
 }
