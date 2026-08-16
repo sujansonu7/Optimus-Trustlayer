@@ -1,5 +1,10 @@
 # Making the /sources Renewals badge go green
 
+**You can skip this.** The demo works with the spreadsheet file in this repo.
+The rest of the app (Ask, Conflicts, Crew) reads ingested Postgres facts, not
+this live Google read. Follow this page only if you want the Renewals tab on
+`/sources` to say “Live” instead of “cached.” Day-one setup is in the README.
+
 The Renewals tab on `/sources` shows one of two badges:
 
 | Badge | Meaning |

@@ -3,10 +3,14 @@
 This file is the durable brief for anyone (human or AI) working on TrustLayer.
 Read it before making changes.
 
+How to run the app, load the demo, and walk the pages: **[README.md](README.md)**.
+The product thesis (nine layers, why this order): **[VISION.md](VISION.md)**.
+Do not duplicate setup here. Treat VISION.md as destination, not as a claim that every layer ships.
+
 ## What TrustLayer is
 
-TrustLayer is a **knowledge operating system with a work layer**. For a fixture
-company, it:
+TrustLayer is a **knowledge operating system with a work layer**. Against the
+bundled Meridian Analytics fixture it:
 
 - **Ingests** data from four tools: **CRM, spreadsheet, email, calls**.
 - **Resolves entities** that appear under multiple names into single identities.
@@ -14,10 +18,12 @@ company, it:
   **freshness**.
 - **Answers questions** with **citations** and **freshness badges**.
 - **Runs an agent** that does real work on that knowledge.
-- Supports **delegation** with a **task ledger**.
-- Maintains a **governed canon** with **human approval**.
-- Supports **saved processes**, **write-back with revert**, and
-  **long-horizon jobs**.
+- Supports **delegation** with a **task ledger** (`/crew`).
+- Maintains a **governed canon** with **human approval** (`/settings`, `/decisions`).
+
+Not built (do not add docs or UI that claim they are): write-back to Google
+Sheets, scheduled morning briefs, long-horizon job replay, or ingest of the
+unused Slack / Notion / billing files in `fixture/`.
 
 ## Standing rules (do not violate)
 
@@ -52,5 +58,5 @@ company, it:
   are shown. It sits behind a swappable **`Runner`** interface
   (`lib/agent/runner/`), so the sandbox can be replaced in one file.
 - Secrets live only in a git-ignored `.env` locally and in Vercel environment
-  variables. `.env.example` documents the variable names.
+  variables. `.env.example` documents the variable names. Setup is in the README.
 - Deployed on **Vercel**.
